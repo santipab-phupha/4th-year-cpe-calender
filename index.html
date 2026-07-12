@@ -600,6 +600,12 @@
       <input type="text" id="shPaste" placeholder="วางโค้ดหรือลิงก์ตรงนี้" style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:.75rem;font-family:monospace">
       <button class="print-btn" id="shLoad">โหลด</button>
     </div>
+    <label style="font-size:.8rem;font-weight:600;display:block;margin:14px 0 4px">ไฟล์เซฟในเครื่อง (.json)</label>
+    <div style="display:flex;gap:6px">
+      <button class="print-btn" id="shSaveFile" style="flex:1">💾 ดาวน์โหลดไฟล์เซฟ</button>
+      <button class="print-btn" id="shOpenFile" style="flex:1">📂 เปิดไฟล์เซฟ</button>
+      <input type="file" id="shFileInput" accept=".json,application/json" style="display:none">
+    </div>
     <div id="shMsg" style="font-size:.75rem;margin-top:8px;color:var(--muted)"></div>
 
     <div class="close-row">
@@ -1779,6 +1785,60 @@ document.getElementById("shLoad").addEventListener("click", () => {
     ok ? `โหลดสำเร็จ ${ok}/${total} วิชา ✓` : "โค้ดไม่ถูกต้อง — ไม่พบวิชาที่ตรงกัน";
   document.getElementById("shMsg").style.color = ok ? "#2b8a3e" : "var(--danger)";
 });
+// ── ไฟล์เซฟ .json: ดาวน์โหลด / เปิด ──
+document.getElementById("shSaveFile").addEventListener("click", () => {
+  const data = {
+    app: "cpe-course-selector",
+    term: "1/2569",
+    saved: new Date().toISOString(),
+    selection: serialize(),
+    custom: CUSTOM_COURSES,
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "ตารางเรียน-1-2569.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+  const msg = document.getElementById("shMsg");
+  msg.textContent = "ดาวน์โหลดไฟล์เซฟแล้ว ✓";
+  msg.style.color = "#2b8a3e";
+});
+document.getElementById("shOpenFile").addEventListener("click", () => {
+  document.getElementById("shFileInput").click();
+});
+document.getElementById("shFileInput").addEventListener("change", e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const msg = document.getElementById("shMsg");
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (data.app !== "cpe-course-selector") throw new Error("wrong app");
+      // เอาวิชา custom ในไฟล์มารวมก่อน (ข้ามตัวที่มีอยู่แล้ว)
+      let addedCustom = 0;
+      (data.custom || []).forEach(cc => {
+        if (cc && cc.id && !byId[cc.id] && !CUSTOM_COURSES.some(x => x.id === cc.id)) {
+          cc.type = "CUSTOM";
+          CUSTOM_COURSES.push(cc);
+          addedCustom++;
+        }
+      });
+      if (addedCustom) { saveCustom(); rebuildData(); buildSidebar(); }
+      const { ok, total } = applyCode(data.selection || "");
+      msg.textContent = `เปิดไฟล์สำเร็จ — โหลด ${ok}/${total} วิชา` +
+        (addedCustom ? ` + วิชาเพิ่มเอง ${addedCustom} วิชา` : "") + " ✓";
+      msg.style.color = "#2b8a3e";
+    } catch (err) {
+      msg.textContent = "ไฟล์ไม่ถูกต้อง — ต้องเป็นไฟล์เซฟจากเว็บนี้ (.json)";
+      msg.style.color = "var(--danger)";
+    }
+    e.target.value = "";
+  };
+  reader.readAsText(file);
+});
+
 document.getElementById("shClose").addEventListener("click", () => document.getElementById("shareModal").classList.remove("show"));
 document.getElementById("shareModal").addEventListener("click", e => {
   if (e.target.id === "shareModal") document.getElementById("shareModal").classList.remove("show");
