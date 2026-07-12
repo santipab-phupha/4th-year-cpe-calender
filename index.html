@@ -274,6 +274,167 @@
   .modal .grp-row input { accent-color: var(--cc); margin-top: 3px; }
   .modal .grp-wrap { max-height: 320px; overflow-y: auto; }
 
+  /* ── Print button ────────────────────── */
+  .print-btn {
+    background: #fff; color: var(--accent);
+    border: 1.5px solid var(--accent); border-radius: 999px;
+    padding: 7px 16px; font-size: .85rem; font-weight: 600;
+    cursor: pointer; font-family: inherit; white-space: nowrap;
+    transition: background .15s;
+  }
+  .print-btn:hover { background: #edf2ff; }
+
+  /* ── Print modal ─────────────────────── */
+  .pm-box {
+    background: var(--panel);
+    border-radius: 16px;
+    width: min(1200px, 96vw);
+    max-height: 92vh;
+    display: flex;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(10,15,40,.3);
+  }
+  .pm-controls {
+    width: 250px; flex-shrink: 0;
+    padding: 18px;
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    font-size: .82rem;
+  }
+  .pm-controls h3 { font-size: .95rem; margin-bottom: 12px; }
+  .pm-controls label.fld { display: block; font-weight: 600; margin: 12px 0 4px; color: #3a4258; }
+  .pm-controls input[type=text] {
+    width: 100%; padding: 7px 10px;
+    border: 1.5px solid var(--border); border-radius: 8px;
+    font-family: inherit; font-size: .8rem; outline: none;
+  }
+  .pm-controls input[type=text]:focus { border-color: var(--accent); }
+  .theme-opt {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 8px; border: 1.5px solid var(--border);
+    border-radius: 8px; margin-bottom: 6px; cursor: pointer;
+  }
+  .theme-opt.on { border-color: var(--accent); background: #edf2ff; }
+  .theme-opt .sw { width: 22px; height: 22px; border-radius: 6px; flex-shrink: 0; border: 1px solid rgba(0,0,0,.15); }
+  .theme-opt small { color: var(--muted); display: block; }
+  .pm-row { display: flex; gap: 6px; }
+  .pm-row .theme-opt { flex: 1; justify-content: center; }
+  .pm-check { display: flex; align-items: center; gap: 8px; margin-top: 10px; cursor: pointer; }
+  .pm-actions { margin-top: 16px; display: flex; gap: 8px; }
+  .pm-actions button {
+    flex: 1; padding: 9px 0; border-radius: 8px;
+    font-family: inherit; font-size: .85rem; cursor: pointer;
+  }
+  #pmPrint { background: var(--accent); color: #fff; border: none; font-weight: 700; }
+  #pmCancel { background: #fff; color: var(--muted); border: 1.5px solid var(--border); }
+  .pm-preview { flex: 1; overflow: auto; background: #e9ecf3; padding: 18px; }
+  .pv-scale { transform-origin: top left; }
+
+  /* ── Print sheet (.ps) ───────────────── */
+  .ps {
+    background: #fff;
+    padding: 16px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    font-family: "Segoe UI", "Leelawadee UI", "Noto Sans Thai", Tahoma, sans-serif;
+    color: #222;
+  }
+  .ps.landscape { width: 1050px; }
+  .ps.portrait { width: 740px; }
+  .ps-frame { padding: 18px 20px; position: relative; }
+  .ps-head { text-align: center; margin-bottom: 12px; }
+  .ps-title { font-size: 1.3rem; font-weight: 800; }
+  .ps-sub { font-size: .8rem; color: #666; margin-top: 3px; }
+  .ps-cal {
+    display: grid;
+    grid-template-columns: 46px repeat(6, 1fr);
+    border: 1px solid #ccd2de;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+  }
+  .ps-ch {
+    padding: 6px 4px; text-align: center;
+    font-weight: 700; font-size: .75rem;
+    border-bottom: 1px solid #ccd2de;
+    border-left: 1px solid #e3e7ef;
+    background: #f4f6fb;
+  }
+  .ps-ch:first-child { border-left: none; }
+  .ps-tcol { position: relative; }
+  .ps-tlb {
+    position: absolute; right: 5px; transform: translateY(-50%);
+    font-size: .62rem; color: #888;
+  }
+  .ps-dcol { position: relative; border-left: 1px solid #e3e7ef; }
+  .ps-hline { position: absolute; left: 0; right: 0; border-top: 1px solid #f0f2f8; }
+  .ps-blk {
+    position: absolute; border-radius: 6px;
+    padding: 3px 5px; color: #fff;
+    font-size: .6rem; line-height: 1.3; overflow: hidden;
+  }
+  .ps-blk b { display: block; font-size: .63rem; }
+  .ps-empty { text-align: center; color: #999; padding: 30px 0; font-size: .85rem; }
+  .ps-table { width: 100%; border-collapse: collapse; font-size: .68rem; margin-top: 12px; }
+  .ps-table th, .ps-table td { border: 1px solid #d8dde8; padding: 4px 7px; text-align: left; vertical-align: top; }
+  .ps-table th { background: #f4f6fb; font-size: .66rem; }
+  .ps-table .dot { display: inline-block; width: 8px; height: 8px; border-radius: 3px; margin-right: 5px; }
+  .ps-foot { text-align: center; font-size: .62rem; color: #aaa; margin-top: 10px; }
+
+  /* themes */
+  .theme-classic .ps-frame { border: 2.5px solid #2b2f3a; border-radius: 4px; }
+  .theme-classic .ps-title { letter-spacing: .02em; }
+
+  .theme-pastel { background: linear-gradient(135deg, #fff5f7, #f0f7ff); }
+  .theme-pastel .ps-frame { border: 3px solid #f8c8dc; border-radius: 22px; background: rgba(255,255,255,.75); }
+  .theme-pastel .ps-title { color: #d6336c; }
+  .theme-pastel .ps-ch { background: #fdf0f5; }
+
+  .theme-mint { background: linear-gradient(135deg, #f2fbf6, #eefcf9); }
+  .theme-mint .ps-frame { border: 3px solid #96e6c8; border-radius: 18px; background: rgba(255,255,255,.75); }
+  .theme-mint .ps-title { color: #087f5b; }
+  .theme-mint .ps-ch { background: #ebfaf3; }
+
+  .theme-kmutt { background: #fff; }
+  .theme-kmutt .ps-frame { border: 3px double #e8590c; outline: 1.5px solid #ffd8a8; outline-offset: -8px; border-radius: 10px; }
+  .theme-kmutt .ps-title { color: #e8590c; }
+  .theme-kmutt .ps-ch { background: #fff4e6; }
+
+  .theme-night { background: #1a1d29; color: #e8eaf2; }
+  .theme-night .ps-frame { border: 2px solid #4c5680; border-radius: 14px; }
+  .theme-night .ps-sub { color: #9aa3c0; }
+  .theme-night .ps-cal { background: #232738; border-color: #3a4160; }
+  .theme-night .ps-ch { background: #2b3048; border-color: #3a4160; color: #e8eaf2; }
+  .theme-night .ps-dcol { border-color: #333a56; }
+  .theme-night .ps-hline { border-color: #2c3149; }
+  .theme-night .ps-tlb { color: #7c86ab; }
+  .theme-night .ps-table th { background: #2b3048; }
+  .theme-night .ps-table th, .theme-night .ps-table td { border-color: #3a4160; }
+
+  .theme-cute { background: #fff9fb; }
+  .theme-cute .ps-frame { border: 3px dashed #f783ac; border-radius: 24px; }
+  .theme-cute .ps-frame::before { content: "🌸"; position: absolute; top: -14px; left: 18px; font-size: 22px; }
+  .theme-cute .ps-frame::after { content: "🌸"; position: absolute; bottom: -14px; right: 18px; font-size: 22px; }
+  .theme-cute .ps-title { color: #e64980; }
+  .theme-cute .ps-title::before { content: "✧ "; }
+  .theme-cute .ps-title::after { content: " ✧"; }
+  .theme-cute .ps-ch { background: #fdeef4; }
+
+  /* ── @media print ────────────────────── */
+  @media print {
+    body { overflow: visible; height: auto; display: block; }
+    header, .layout, #overlay { display: none !important; }
+    #printModal { position: static !important; display: block !important; padding: 0 !important; background: none !important; }
+    #printModal .pm-controls { display: none !important; }
+    #printModal .pm-box {
+      box-shadow: none; border-radius: 0;
+      max-height: none; width: auto; display: block; overflow: visible;
+    }
+    #printModal .pm-preview { padding: 0; background: none; overflow: visible; }
+    .pv-scale { transform: none !important; width: auto !important; height: auto !important; }
+    .ps { width: 100% !important; padding: 0; }
+  }
+
   @media (max-width: 860px) {
     .layout { flex-direction: column; }
     aside { width: 100%; max-height: 46vh; border-right: none; border-bottom: 1px solid var(--border); }
@@ -290,6 +451,7 @@
   <div class="spacer"></div>
   <span class="conflict-badge" id="conflictBadge">⚠ เวลาเรียนชนกัน!</span>
   <span class="credit-badge" id="creditBadge">0 หน่วยกิต · 0 วิชา</span>
+  <button class="print-btn" id="printBtn">🖨️ พิมพ์ตาราง</button>
 </header>
 
 <div class="layout">
@@ -309,6 +471,41 @@
 <div class="overlay" id="overlay">
   <div class="modal" id="modalBody"></div>
 </div>
+
+<div class="overlay" id="printModal">
+  <div class="pm-box">
+    <div class="pm-controls">
+      <h3>🖨️ พิมพ์ตารางเรียน</h3>
+
+      <label class="fld">หัวตาราง</label>
+      <input type="text" id="pmTitle" value="ตารางเรียน 1/2569">
+      <label class="fld">ชื่อ (ไม่บังคับ)</label>
+      <input type="text" id="pmName" placeholder="เช่น สันติภาพ · CPE ปี 4">
+
+      <label class="fld">เลือกเฟรม</label>
+      <div id="pmThemes"></div>
+
+      <label class="fld">แนวกระดาษ (A4)</label>
+      <div class="pm-row" id="pmOrient">
+        <div class="theme-opt" data-o="landscape">แนวนอน</div>
+        <div class="theme-opt" data-o="portrait">แนวตั้ง</div>
+      </div>
+
+      <label class="pm-check"><input type="checkbox" id="pmTable" checked> แนบตารางสรุปรายวิชา</label>
+
+      <div class="pm-actions">
+        <button id="pmCancel">ปิด</button>
+        <button id="pmPrint">🖨️ พิมพ์</button>
+      </div>
+    </div>
+    <div class="pm-preview">
+      <div class="pv-scale" id="pvScale">
+        <div id="printArea"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<style id="pageStyle"></style>
 
 <script>
 // ════════════════════════════════════════════════════════════════
@@ -1091,6 +1288,133 @@ document.getElementById("overlay").addEventListener("click", e => {
   if (e.target.id === "overlay") closeModal();
 });
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+
+// ── Print ──
+const THEMES = [
+  { id: "classic", label: "Classic", desc: "กรอบเรียบ ทางการ", sw: "#2b2f3a" },
+  { id: "pastel",  label: "Pastel",  desc: "หวาน ๆ ชมพูฟ้า",   sw: "#f8c8dc" },
+  { id: "mint",    label: "Mint",    desc: "เขียวมิ้นต์สบายตา", sw: "#96e6c8" },
+  { id: "kmutt",   label: "KMUTT",   desc: "ส้มมดแดง",         sw: "#e8590c" },
+  { id: "cute",    label: "Cute",    desc: "เส้นประ + ดอกไม้",  sw: "#f783ac" },
+  { id: "night",   label: "Night",   desc: "โทนมืด (เปลืองหมึก)", sw: "#1a1d29" },
+];
+const printCfg = { theme: "pastel", orient: "landscape", table: true };
+
+function buildPrintControls() {
+  const wrap = document.getElementById("pmThemes");
+  wrap.innerHTML = THEMES.map(t => `
+    <div class="theme-opt ${printCfg.theme === t.id ? "on" : ""}" data-t="${t.id}">
+      <span class="sw" style="background:${t.sw}"></span>
+      <span><b>${t.label}</b><small>${t.desc}</small></span>
+    </div>`).join("");
+  wrap.querySelectorAll(".theme-opt").forEach(el => {
+    el.addEventListener("click", () => { printCfg.theme = el.dataset.t; buildPrintControls(); renderPrintSheet(); });
+  });
+  document.querySelectorAll("#pmOrient .theme-opt").forEach(el => {
+    el.classList.toggle("on", el.dataset.o === printCfg.orient);
+  });
+}
+document.querySelectorAll("#pmOrient .theme-opt").forEach(el => {
+  el.addEventListener("click", () => { printCfg.orient = el.dataset.o; buildPrintControls(); renderPrintSheet(); });
+});
+document.getElementById("pmTable").addEventListener("change", e => { printCfg.table = e.target.checked; renderPrintSheet(); });
+document.getElementById("pmTitle").addEventListener("input", renderPrintSheet);
+document.getElementById("pmName").addEventListener("input", renderPrintSheet);
+
+function renderPrintSheet() {
+  const area = document.getElementById("printArea");
+  area.className = `ps theme-${printCfg.theme} ${printCfg.orient}`;
+
+  const sel = [...selected.values()].map(({ cid, si }) => ({ c: byId[cid], s: byId[cid].sections[si] }));
+  const flat = sel.flatMap(x => x.s.slots.map(sl => ({ ...x, sl })));
+  const credits = [...new Set(sel.map(x => x.c.id))].reduce((sum, id) => sum + byId[id].credits, 0);
+
+  // ช่วงเวลาอัตโนมัติตามวิชาที่เลือก
+  let minH = 8, maxH = 17;
+  if (flat.length) {
+    minH = Math.min(8, Math.floor(Math.min(...flat.map(x => x.sl.start))));
+    maxH = Math.max(17, Math.ceil(Math.max(...flat.map(x => x.sl.end))));
+  }
+  const bodyH = printCfg.orient === "landscape" ? 430 : 520;
+  const hp = bodyH / (maxH - minH);
+
+  const title = document.getElementById("pmTitle").value || "ตารางเรียน";
+  const name = document.getElementById("pmName").value;
+
+  let cal = `<div class="ps-cal"><div class="ps-ch">เวลา</div>` +
+    DAYS.map(d => `<div class="ps-ch">${d}</div>`).join("");
+  // time col
+  cal += `<div class="ps-tcol" style="height:${bodyH}px">`;
+  for (let h = minH; h <= maxH; h++)
+    cal += `<div class="ps-tlb" style="top:${(h - minH) * hp}px">${fmtTime(h)}</div>`;
+  cal += `</div>`;
+  // day cols
+  for (let d = 1; d <= 6; d++) {
+    cal += `<div class="ps-dcol" style="height:${bodyH}px">`;
+    for (let h = minH + 1; h < maxH; h++)
+      cal += `<div class="ps-hline" style="top:${(h - minH) * hp}px"></div>`;
+    const dayItems = flat.filter(x => x.sl.day === d).sort((a, b) => a.sl.start - b.sl.start);
+    const clusters = [];
+    let cur = [], curEnd = -1;
+    dayItems.forEach(x => {
+      if (cur.length && x.sl.start < curEnd) { cur.push(x); curEnd = Math.max(curEnd, x.sl.end); }
+      else { if (cur.length) clusters.push(cur); cur = [x]; curEnd = x.sl.end; }
+    });
+    if (cur.length) clusters.push(cur);
+    clusters.forEach(cluster => {
+      const n = cluster.length;
+      cluster.forEach((x, i) => {
+        const { c, s, sl } = x;
+        cal += `<div class="ps-blk" style="background:${c.color};top:${(sl.start - minH) * hp + 1.5}px;height:${(sl.end - sl.start) * hp - 3}px;left:calc(${(i / n) * 100}% + 2px);width:calc(${100 / n}% - 4px)">` +
+          `<b>${c.code}</b>${fmtTime(sl.start)}–${fmtTime(sl.end)}<br>${roomLabel(s)}</div>`;
+      });
+    });
+    cal += `</div>`;
+  }
+  cal += `</div>`;
+
+  let table = "";
+  if (printCfg.table && sel.length) {
+    table = `<table class="ps-table"><tr><th>รหัส</th><th>ชื่อวิชา</th><th>Sec</th><th>วัน–เวลา</th><th>ห้อง/รูปแบบ</th><th>อาจารย์</th><th>นก.</th></tr>` +
+      sel.map(({ c, s }) => `<tr><td><span class="dot" style="background:${c.color}"></span>${c.code}</td><td>${c.name}</td><td>${s.sec}</td><td>${slotsStr(s)}</td><td>${roomLabel(s)}</td><td>${teacherStr(s)}</td><td>${c.credits}</td></tr>`).join("") +
+      `<tr><td colspan="6" style="text-align:right;font-weight:700">รวม ${sel.length} วิชา</td><td style="font-weight:700">${credits}</td></tr></table>`;
+  }
+
+  area.innerHTML = `<div class="ps-frame">
+    <div class="ps-head">
+      <div class="ps-title">${title}</div>
+      <div class="ps-sub">${name ? name + " · " : ""}มจธ. (KMUTT) · ${credits} หน่วยกิต · ${sel.length} วิชา</div>
+    </div>
+    ${sel.length ? cal : `<div class="ps-empty">ยังไม่ได้เลือกวิชา — ปิดหน้านี้แล้วติ๊กเลือกวิชาก่อน</div>`}
+    ${table}
+    <div class="ps-foot">พิมพ์จาก CPE Course Selector · ภาคการศึกษา 1/2569</div>
+  </div>`;
+
+  // scale preview + ตั้งขนาดหน้ากระดาษ
+  const sheetW = printCfg.orient === "landscape" ? 1050 : 740;
+  const scale = 0.55;
+  const pv = document.getElementById("pvScale");
+  pv.style.transform = `scale(${scale})`;
+  requestAnimationFrame(() => {
+    pv.style.width = sheetW * scale + "px";
+    pv.style.height = area.offsetHeight * scale + "px";
+  });
+  document.getElementById("pageStyle").textContent =
+    `@page { size: A4 ${printCfg.orient}; margin: 8mm; }`;
+}
+
+document.getElementById("printBtn").addEventListener("click", () => {
+  buildPrintControls();
+  renderPrintSheet();
+  document.getElementById("printModal").classList.add("show");
+});
+document.getElementById("pmCancel").addEventListener("click", () => {
+  document.getElementById("printModal").classList.remove("show");
+});
+document.getElementById("printModal").addEventListener("click", e => {
+  if (e.target.id === "printModal") document.getElementById("printModal").classList.remove("show");
+});
+document.getElementById("pmPrint").addEventListener("click", () => window.print());
 
 buildSidebar();
 buildCalendar();
