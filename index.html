@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เลือกวิชาเรียน ปี 4 — CPE + GEN + LNG 1/2569</title>
+<style>
+  :root {
+    --bg: #f4f6fb;
+    --panel: #ffffff;
+    --border: #e2e6ef;
+    --text: #1f2533;
+    --muted: #6b7280;
+    --accent: #3b5bdb;
+    --danger: #e03131;
+    --radius: 12px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", "Leelawadee UI", "Noto Sans Thai", Tahoma, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 22px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  header h1 { font-size: 1.1rem; font-weight: 700; }
+  header .sub { font-size: .78rem; color: var(--muted); }
+  .spacer { flex: 1; }
+  .credit-badge {
+    background: #edf2ff;
+    color: var(--accent);
+    font-weight: 700;
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: .9rem;
+    white-space: nowrap;
+  }
+  .conflict-badge {
+    background: #fff5f5;
+    color: var(--danger);
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: .85rem;
+    display: none;
+    white-space: nowrap;
+  }
+  .conflict-badge.show { display: inline-block; }
+
+  .layout { flex: 1; display: flex; min-height: 0; }
+
+  /* ── Sidebar ─────────────────────────── */
+  aside {
+    width: 400px;
+    min-width: 330px;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .search-box {
+    padding: 12px 14px 10px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .search-box input {
+    width: 100%;
+    padding: 9px 12px 9px 36px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: .85rem;
+    font-family: inherit;
+    outline: none;
+    background: #fafbfe url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.4' stroke-linecap='round'><circle cx='11' cy='11' r='7'/><line x1='21' y1='21' x2='16.5' y2='16.5'/></svg>") no-repeat 12px center;
+  }
+  .search-box input:focus { border-color: var(--accent); background-color: #fff; }
+  .search-hint { font-size: .7rem; color: var(--muted); margin-top: 5px; }
+  .scroll-list { overflow-y: auto; flex: 1; padding: 12px 14px; }
+
+  .group-header {
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--muted);
+    margin: 14px 4px 8px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .group-header:first-child { margin-top: 2px; }
+  .group-header .cnt {
+    background: #eef1f8; border-radius: 999px;
+    padding: 1px 9px; font-size: .7rem; color: #555;
+  }
+
+  .course-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    transition: box-shadow .15s, border-color .15s, background .15s;
+    position: relative;
+  }
+  .course-card:hover { box-shadow: 0 2px 10px rgba(30,40,90,.08); }
+  .course-card.has-selected {
+    border-color: var(--cc, var(--accent));
+    background: color-mix(in srgb, var(--cc, var(--accent)) 6%, white);
+  }
+  .course-card.hidden { display: none; }
+  .cc-dot {
+    width: 10px; height: 10px; border-radius: 3px;
+    background: var(--cc);
+    position: absolute; top: 13px; right: 12px;
+  }
+  .course-code { font-weight: 700; font-size: .85rem; color: var(--cc, var(--accent)); }
+  .course-name { font-size: .82rem; font-weight: 600; line-height: 1.35; margin: 2px 0 4px; }
+  .detail-btn {
+    margin-top: 6px;
+    font-size: .72rem;
+    color: var(--accent);
+    background: none; border: none; cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+    font-family: inherit;
+  }
+  .sec-list.tall { max-height: 210px; overflow-y: auto; border-top: 1px dashed var(--border); margin-top: 4px; }
+
+  /* section rows */
+  .sec-row {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 6px 8px;
+    margin-top: 4px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: .74rem;
+    line-height: 1.4;
+    border: 1px solid transparent;
+  }
+  .sec-row:hover { background: #f4f6fc; }
+  .sec-row.on {
+    background: color-mix(in srgb, var(--cc, var(--accent)) 12%, white);
+    border-color: color-mix(in srgb, var(--cc, var(--accent)) 45%, white);
+  }
+  .sec-row input { margin-top: 2px; accent-color: var(--cc, var(--accent)); cursor: pointer; flex-shrink: 0; }
+  .sec-row .sec-main { flex: 1; }
+  .sec-row .sec-title { font-weight: 600; color: #3a4258; }
+  .sec-row .sec-sub { color: var(--muted); }
+  .fmt {
+    display: inline-block; font-size: .64rem; font-weight: 700;
+    padding: 1px 7px; border-radius: 999px; vertical-align: 1px;
+  }
+  .fmt.online  { background: #d3f9d8; color: #2b8a3e; }
+  .fmt.blended { background: #d0ebff; color: #1971c2; }
+  .fmt.onsite  { background: #f3d9fa; color: #862e9c; }
+  .fmt.inter   { background: #ffe8cc; color: #d9480f; }
+
+  /* ── Calendar ────────────────────────── */
+  main { flex: 1; overflow: auto; padding: 18px; }
+  .cal-wrap {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    min-width: 860px;
+    display: grid;
+    grid-template-columns: 60px repeat(6, 1fr);
+    position: relative;
+  }
+  .cal-head {
+    padding: 10px 6px;
+    text-align: center;
+    font-weight: 700;
+    font-size: .85rem;
+    border-bottom: 1px solid var(--border);
+    border-left: 1px solid var(--border);
+    position: sticky; top: 0;
+    background: var(--panel);
+    z-index: 5;
+  }
+  .cal-head.corner { border-left: none; }
+  .cal-head.sat { color: #9c36b5; }
+  .time-col { position: relative; }
+  .time-label {
+    position: absolute;
+    right: 8px;
+    transform: translateY(-50%);
+    font-size: .7rem;
+    color: var(--muted);
+  }
+  .day-col { position: relative; border-left: 1px solid var(--border); }
+  .day-col.sat { background: #fdfaff; }
+  .hour-line {
+    position: absolute; left: 0; right: 0;
+    border-top: 1px solid #eef1f7;
+  }
+  .block {
+    position: absolute;
+    border-radius: 8px;
+    padding: 5px 7px;
+    font-size: .7rem;
+    line-height: 1.3;
+    color: #fff;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(20,30,70,.18);
+    cursor: pointer;
+    transition: filter .12s;
+  }
+  .block:hover { filter: brightness(1.08); z-index: 4 !important; }
+  .block b { display: block; font-size: .73rem; }
+  .block .rm { opacity: .9; }
+  .block.clash { outline: 2px dashed #fff; outline-offset: -3px; }
+
+  /* ── Modal ───────────────────────────── */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(15,20,40,.45);
+    display: none;
+    align-items: center; justify-content: center;
+    z-index: 50;
+    padding: 20px;
+  }
+  .overlay.show { display: flex; }
+  .modal {
+    background: var(--panel);
+    border-radius: 16px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 24px;
+    box-shadow: 0 20px 60px rgba(10,15,40,.3);
+  }
+  .modal .tag {
+    display: inline-block;
+    font-size: .75rem; font-weight: 700;
+    padding: 3px 10px; border-radius: 999px;
+    color: #fff; background: var(--cc, var(--accent));
+    margin-bottom: 8px;
+  }
+  .modal h3 { font-size: 1.05rem; margin-bottom: 4px; }
+  .modal .thname { color: var(--muted); font-size: .85rem; margin-bottom: 14px; }
+  .modal table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+  .modal td { padding: 7px 4px; vertical-align: top; border-bottom: 1px solid #f0f2f8; }
+  .modal td:first-child { color: var(--muted); width: 118px; white-space: nowrap; }
+  .modal a { color: var(--accent); word-break: break-all; }
+  .modal .close-row { text-align: right; margin-top: 16px; }
+  .modal button.close {
+    background: var(--accent); color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 20px; font-size: .85rem;
+    cursor: pointer; font-family: inherit;
+  }
+  .modal .grp-row {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 7px 10px; border: 1px solid var(--border);
+    border-radius: 8px; margin-bottom: 6px; font-size: .8rem;
+    cursor: pointer;
+  }
+  .modal .grp-row:hover { background: #f6f8fd; }
+  .modal .grp-row.on {
+    border-color: var(--cc); background: color-mix(in srgb, var(--cc) 10%, white);
+  }
+  .modal .grp-row input { accent-color: var(--cc); margin-top: 3px; }
+  .modal .grp-wrap { max-height: 320px; overflow-y: auto; }
+
+  @media (max-width: 860px) {
+    .layout { flex-direction: column; }
+    aside { width: 100%; max-height: 46vh; border-right: none; border-bottom: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>📅 เลือกวิชาเรียน ปี 4 — CPE + GEN + LNG</h1>
+    <div class="sub">มจธ. (KMUTT) · 1/2569 · CPE จากตารางคณะ · GEN จาก gened.kmutt.ac.th · LNG จากตารางสายวิชาภาษา คณะศิลปศาสตร์</div>
+  </div>
+  <div class="spacer"></div>
+  <span class="conflict-badge" id="conflictBadge">⚠ เวลาเรียนชนกัน!</span>
+  <span class="credit-badge" id="creditBadge">0 หน่วยกิต · 0 วิชา</span>
+</header>
+
+<div class="layout">
+  <aside>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="ค้นหา: รหัส / ชื่อวิชา / อาจารย์ / กลุ่มนักศึกษา เช่น LNG223, CPE inter...">
+      <div class="search-hint" id="searchHint"></div>
+    </div>
+    <div class="scroll-list" id="courseList"></div>
+  </aside>
+
+  <main>
+    <div class="cal-wrap" id="calendar"></div>
+  </main>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modalBody"></div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+// day abbrev: จ=1 อ=2 พ=3 พฤ=4 ศ=5 ส=6 ; slot string "พ 9.30-12.30"
+// หลายช่วงเวลา คั่นด้วย | เช่น "อ 16.30-18.30|พ 15.30-17.30"
+// ════════════════════════════════════════════════════════════════
+const DAYS = ["จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
+const DAY_ABBR = { "จ":1, "อ":2, "พ":3, "พฤ":4, "ศ":5, "ส":6 };
+const DAY_START = 8, DAY_END = 21;
+const HOUR_PX = 48;
+
+function parseSlots(str) {
+  return str.split("|").map(part => {
+    const [d, t] = part.trim().split(" ");
+    const [a, b] = t.split("-");
+    const f = s => { const [h, m] = s.split("."); return parseInt(h) + (m ? parseInt(m.padEnd(2, "0")) / 60 : 0); };
+    return { day: DAY_ABBR[d], start: f(a), end: f(b) };
+  });
+}
+
+// ═══ วิชาภาค CPE ปี 4 — จาก 2. CPE_ClassScheduleByStudentYear.pdf ═══
+const CPE_DEFS = [
+  ["CPE365","INTELLIGENT ROBOT PROGRAMMING",3,"CPE100 (Pre)","#e8590c",
+    [["1","พ 18.00-21.00","CPE1114","4A, 4B",["ผศ.ดร.จุมพล พลวิชัย"]]]],
+  ["CPE373","DATA SECURITY FOR MULTIMEDIA COMMUNICATIONS",3,"CPE111 (Pre)","#2f9e44",
+    [["1","พ 9.00-12.00","CPE1114","4A, 4B",["รศ.ดร.ธำรงรัตน์ อมรรักษา"]]]],
+  ["CPE386","GAME DESIGN AND DEVELOPMENT",3,"-","#9c36b5",
+    [["1","อ 13.30-16.30","CPE1121","4A, 4B",["รศ.ดร.ณัฐชา เดชดำรง","ดร.ทวีชัย นันทวิสุทธิวงศ์"]]]],
+  ["CPE393-NT|CPE393","SPECIAL TOPIC III : NEW TECHNOLOGY AND TECHNOLOGY MANAGEMENT",3,"-","#1971c2",
+    [["1","ศ 8.30-11.30","ONLINE","4A, 4B",["ผศ.สนั่น สระแก้ว"]]]],
+  ["CPE393-TA|CPE393","SPECIAL TOPIC III : TEXT ANALYTICS",3,"-","#0c8599",
+    [["1","พฤ 9.30-12.30","CPE1121","4A, 4B",["ดร.สัญญ์สิริ ธารประดับ"]]]],
+  ["CPE393-GPU|CPE393","SPECIAL TOPIC III : GPU PROGRAMMING",3,"-","#5f3dc4",
+    [["1","ศ 9.30-12.30","CPE1115","4A, 4B",["Dr.Aye Hninn Khine","ดร.บุญฤทธิ์ จันทร์ไกรวัล"]]]],
+  ["CPE401","COMPUTER ENGINEERING PROJECT I",3,"-","#c2255c",
+    [["1","จ 13.30-16.30","ONLINE","4A, 4B",["ผศ.ราชวิชช์ สโรชวิกสิต","ดร.สัญญ์สิริ ธารประดับ","ดร.ปิยนิตย์ เอื้ออารีมิตร"]]]],
+  ["CPE409","WORK-INTEGRATED LEARNING",9,"-","#a61e4d",
+    [["1","จ 13.30-16.30","ONLINE","4A, 4B",["ผศ.ราชวิชช์ สโรชวิกสิต","ดร.สัญญ์สิริ ธารประดับ","ดร.ปิยนิตย์ เอื้ออารีมิตร"]]]],
+  ["CPE494-COM|CPE494","SPECIAL TOPIC IV : COMMERCIALIZING YOUR PROJECT",3,"-","#e67700",
+    [["1","พ 13.30-16.30","CPE1114","4A, 4B",["ผศ.ดร.ทัศนีย์วรรณ ลักษณะโสภิณ"]]]],
+  ["CPE494-AML|CPE494","SPECIAL TOPIC IV : APPLIED MACHINE LEARNING",3,"-","#37b24d",
+    [["1","พฤ 18.00-21.00","CPE1114","4A, 4B",["ผศ.ดร.จุมพล พลวิชัย"]]]],
+  ["CPE494-IAR|CPE494","SPECIAL TOPIC IV : INDUSTRY AUTOMATION AND ROBOTICS FOR COMPUTER ENGINEERING",3,"-","#f08c00",
+    [["1","พ 13.30-16.30","CPE1114","4A, 4B",["ดร.ประพงษ์ ปรีชาประพาฬวงศ์","อ.ชวิศร สัมฤทธิ์"]]]],
+  ["CPE494-CCS|CPE494","SPECIAL TOPIC IV : CLOUD COMPUTING AND SECURITY",3,"-","#1098ad",
+    [["1","พ 13.30-16.30","CPE1121","4A, 4B",["Dr.A S M ASADUJJAMAN"]]]],
+  ["CPE494-SDN|CPE494","SPECIAL TOPIC IV : SOFTWARE-DEFINED NETWORKING",3,"-","#6741d9",
+    [["1","จ 9.30-12.30","CPE1114","4A, 4B",["Dr.Aung Myo Htut"]]]],
+];
+
+// ═══ วิชา GEN — จาก gened.kmutt.ac.th/schedule_gen (1/2569) ═══
+const GEN_NAMES = {
+  GEN201: "ศาสตร์และศิลป์ในการปรุงและบริโภคอาหาร",
+  GEN211: "ปรัชญาเศรษฐกิจพอเพียง",
+  GEN223: "การเตรียมพร้อมรับภัยพิบัติ",
+  GEN224: "เมืองน่าอยู่",
+  GEN226: "สิ่งเล็ก ๆ ที่เรียกว่าพอลิเมอร์",
+  GEN232: "การวิจัยและนวัตกรรมบนฐานชุมชน",
+  GEN301: "การพัฒนาสุขภาพแบบองค์รวม",
+  GEN311: "จริยศาสตร์ในสังคมฐานวิทยาศาสตร์",
+  GEN321: "ประวัติศาสตร์อารยธรรม",
+  GEN332: "การเล่าเรื่องวิทยาศาสตร์",
+  GEN341: "ภูมิปัญญาท้องถิ่นไทย",
+  GEN352: "เทคโนโลยีและนวัตกรรมเพื่อการพัฒนาอย่างยั่งยืน",
+  GEN353: "จิตวิทยาการจัดการ",
+  GEN354: "นวัตกรรมผลิตภัณฑ์ดิจิทัลและการสร้างให้เป็นธุรกิจ",
+  GEN411: "การพัฒนาบุคลิกภาพและการพูดในที่สาธารณะ",
+  GEN412: "ศาสตร์และศิลป์ในการดำเนินชีวิตและการทำงาน",
+  GEN421: "สังคมศาสตร์บูรณาการ",
+  GEN441: "วัฒนธรรมและการท่องเที่ยว",
+};
+// [code, group, program(N/I), slot, format, instructor]
+const GEN_RAW = [
+["GEN201","1","N","ส 9.30-12.30","blended","ดร.หทัยรัตน์ คุณากรสกุล"],
+["GEN201","2","N","ส 13.30-16.30","blended","ดร.หทัยรัตน์ คุณากรสกุล"],
+["GEN211","1","N","อ 9.30-12.30","blended","ดร.สุรัตน์ เพชรนิล"],
+["GEN211","2","N","ศ 9.30-12.30","online","ดร.สุธานี มะลิพันธ์"],
+["GEN223","1","N","ศ 9.30-12.30","online","ดร.ศิรินันต์ สุวรรณโมลี"],
+["GEN223","2","N","ศ 13.30-16.30","online","ดร.ศิรินันต์ สุวรรณโมลี"],
+["GEN223","3","N","ส 9.30-12.30","online","อ.วีรยุทธ หมื่นบุญมี"],
+["GEN223","4","N","ส 13.30-16.30","online","อ.วีรยุทธ หมื่นบุญมี"],
+["GEN224","1","N","พ 9.30-12.30","blended","อ.อนรรฆ พิทักษ์ธานิน"],
+["GEN224","2","N","พ 13.30-16.30","blended","อ.อนรรฆ พิทักษ์ธานิน"],
+["GEN226","1","N","จ 9.30-12.30","blended","รศ.ดร.สุภโชค ตันพิชัย"],
+["GEN232","1","N","อ 13.30-16.30","online","อ.สาธิยา เขื่อนคำ"],
+["GEN232","2","N","พ 13.30-16.30","online","ผศ.ดร.ธิดารัตน์ บุญศรี"],
+["GEN232","31","I","อ 9.30-12.30","online","ผศ.ดร.ธิดารัตน์ บุญศรี"],
+["GEN301","1","N","ศ 13.30-16.30","blended","ผศ.ดร.อังคนา บุญเสม"],
+["GEN301","2","N","ส 9.30-12.30","blended","ผศ.ดร.อังคนา บุญเสม"],
+["GEN301","3","N","ส 13.30-16.30","blended","ผศ.ดร.อังคนา บุญเสม"],
+["GEN311","1","N","ส 9.30-12.30","on-site","ผศ.ณัฐพล โสตถิรัตน์วิโรจน์"],
+["GEN311","2","N","ส 13.30-16.30","on-site","ผศ.ณัฐพล โสตถิรัตน์วิโรจน์"],
+["GEN321","1","N","อ 9.30-12.30","blended","อ.ศิริพันธ์ นันสุนานนท์"],
+["GEN321","2","N","อ 13.30-16.30","blended","อ.ศิริพันธ์ นันสุนานนท์"],
+["GEN321","3","N","ส 13.30-16.30","blended","อ.ศิริพันธ์ นันสุนานนท์"],
+["GEN321","31","I","ส 13.30-16.30","online","ดร.ชัยพร สิงห์ดี"],
+["GEN332","1","N","ส 9.30-12.30","online","ดร.ชาญชัย สัตยนนท์"],
+["GEN332","2","N","ส 13.30-16.30","online","ดร.ชาญชัย สัตยนนท์"],
+["GEN341","1","N","พฤ 9.30-12.30","blended","ดร.วาณิชชา จันทสระ"],
+["GEN341","2","N","พฤ 13.30-16.30","blended","ดร.วาณิชชา จันทสระ"],
+["GEN341","3","N","ศ 9.30-12.30","blended","อ.พฤษภารัตน์ รัตนาภรณ์"],
+["GEN341","4","N","ศ 13.30-16.30","blended","อ.พฤษภารัตน์ รัตนาภรณ์"],
+["GEN341","31","I","พฤ 9.30-12.30","blended","ดร.อังคณา ใหญ่ยง"],
+["GEN341","32","I","พฤ 13.30-16.30","blended","ดร.อังคณา ใหญ่ยง"],
+["GEN352","1","N","จ 9.30-12.30","blended","ผศ.ดร.วัชรพจน์ ทรัพย์สงวนบุญ, ดร.เวทยา ใฝ่ใจดี, อ.ลักษิกา โปธาสินธุ์"],
+["GEN352","2","N","พ 9.30-12.30","blended","ผศ.ดร.จิรศิลป์ จยาวรรณ, ดร.อลิสา คงทน"],
+["GEN352","3","N","พฤ 9.30-12.30","blended","ดร.เกศกัญญา ทัศสุวรรณ"],
+["GEN352","31","I","พ 9.30-12.30","online","ผศ.ดร.กนกพร กังวาลสงค์"],
+["GEN353","1","N","พฤ 9.30-12.30","blended","อ.เบญจรัตน์ จงจำรัสพันธ์"],
+["GEN353","2","N","พฤ 13.30-16.30","blended","อ.เบญจรัตน์ จงจำรัสพันธ์"],
+["GEN354","1","N","พ 13.30-17.30","blended","รศ.ดร.ราชวดี ศิลาพันธุ์"],
+["GEN354","2","N","ส 8.30-12.30","blended","อ.อารยา ชัยประเสริฐ"],
+["GEN354","31","I","จ 8.30-12.30","blended","อ.อณิษฐา จูฑะรสก"],
+["GEN411","1","N","อ 8.30-12.30","on-site","อ.สุพรรษา ประสงค์สุข"],
+["GEN411","2","N","พ 8.30-12.30","online","อ.นันทพล เจริญภักดี"],
+["GEN411","3","N","พฤ 13.30-17.30","online","อ.นันทพล เจริญภักดี"],
+["GEN411","31","I","อ 13.30-17.30","blended","Mr.Joseph Lancaster"],
+["GEN411","32","I","พ 13.30-17.30","blended","Mr.Joseph Lancaster"],
+["GEN412","1","N","ส 9.30-12.30","online","อ.สันนิธิ ปัญญาประทีป"],
+["GEN412","2","N","ส 13.30-16.30","online","อ.สันนิธิ ปัญญาประทีป"],
+["GEN421","1","N","อ 13.30-16.30","online","อ.พลวศิษฐ หล้ากาศ"],
+["GEN421","31","I","ส 9.30-12.30","blended","ดร.ประกีรติ สัตสุต"],
+["GEN441","1","N","จ 8.30-12.30","blended","อ.ไกรศิลา กานนท์"],
+["GEN441","2","N","ส 8.30-12.30","blended","อ.ศันสนะ มะสุวรรณ"],
+["GEN441","3","N","ส 13.30-17.30","blended","อ.ศันสนะ มะสุวรรณ"],
+];
+
+// ═══ วิชา LNG — จาก ClassScheduleByDepartmentReport.pdf (สายวิชาภาษา คณะศิลปศาสตร์ 1/2569) ═══
+// [code, name, credits, prereq, sections]
+// section: [sec, slots, room, กลุ่มนักศึกษา, teachers(optional)]
+const PRE_STD = "LNG220 หรือ LNG222 หรือ LNG321 หรือ LNG103 หรือ LNG107 (Pre)";
+const LNG_DEFS = [
+["LNG11000","FOUNDATION ENGLISH",3,"-",[
+  ["1","พ 9.30-12.30","CB1207","MCE, SEE (ปี1)"],
+  ["2","พ 13.30-16.30","CB1301","APE, ENE (ปี1)"],
+  ["3","พ 13.30-16.30","CB1402","APE, ENE (ปี1)"],
+  ["4","พฤ 9.30-12.30","CB1305","ETM (ปี1)"],
+  ["5","พฤ 9.30-12.30","CB1307","ETM (ปี1)"],
+  ["6","พฤ 13.30-16.30","CB1205","PPT (ปี1)"],
+  ["7","พฤ 13.30-16.30","CB1207","PPT (ปี1)"],
+  ["8","ศ 9.30-12.30","CB1307","CPE, ENV (ปี1)"],
+  ["9","ศ 13.30-16.30","CB1302","EEE_S, PRE (ปี1)"],
+  ["10","ศ 13.30-16.30","CB2406","EEE_S, PRE (ปี1)"],
+  ["11","ส 9.30-12.30","CB1205","ETM 1C"],
+  ["41","อ 13.30-16.30","CB1205","CPE inter, ENV_EN (ปี1)"],
+  ["99","จ 14.30-15.30","TBA","SEM ปี1 + รหัส 25690002",["อ.กัญทิมา เตชาดิศัย","อ.ทรงลักษณ์ หิรัญรัตนาพร"]],
+]],
+["LNG120","GENERAL ENGLISH",3,"-",[
+  ["1","จ 9.30-12.30","CB1209","AME, PHY, PHY_MED (ปี1)"],
+  ["2","จ 9.30-12.30","CB1303","AME, PHY, PHY_MED (ปี1)"],
+  ["3","จ 9.30-12.30","CB1304","AME, PHY, PHY_MED (ปี1)"],
+  ["4","จ 9.30-12.30","CB1403","AME, PHY, PHY_MED (ปี1)"],
+  ["5","จ 9.30-12.30","CB1301","AME, PHY, PHY_MED (ปี1)"],
+  ["6","อ 9.30-12.30","CB1303","FRA, HDS, MDA, MDT, MMD (ปี1)"],
+  ["7","อ 9.30-12.30","CB1304","FRA, HDS, MDA, MDT, MMD (ปี1)"],
+  ["8","อ 9.30-12.30","CB1403","FRA, HDS, MDA, MDT, MMD (ปี1)"],
+  ["9","อ 9.30-12.30","CB1404","FRA, HDS, MDA, MDT, MMD (ปี1)"],
+  ["10","อ 9.30-12.30","CB1501","FRA, HDS, MDA, MDT, MMD (ปี1)"],
+  ["11","อ 9.30-12.30","CB1504","FRA, HDS, MDA, MDT, MMD (ปี1)"],
+  ["12","อ 9.30-12.30","CB2407","FRA, HDS, MDA, MDT, MMD (ปี1)"],
+  ["13","อ 9.30-12.30","CB2408","FRA, HDS, MDA, MDT, MMD (ปี1)"],
+  ["14","อ 13.30-16.30","CB1209","CVE, FST, MIC, MTH (ปี1)"],
+  ["15","อ 13.30-16.30","CB1304","CVE, FST, MIC, MTH (ปี1)"],
+  ["16","อ 13.30-16.30","CB1403","CVE, FST, MIC, MTH (ปี1)"],
+  ["17","อ 13.30-16.30","CB1404","CVE, FST, MIC, MTH (ปี1)"],
+  ["18","อ 13.30-16.30","CB1501","CVE, FST, MIC, MTH (ปี1)"],
+  ["19","อ 13.30-16.30","CB2404","CVE, FST, MIC, MTH (ปี1)"],
+  ["20","พ 9.30-12.30","CB1209","INC, MTE, PTE (ปี1)"],
+  ["21","พ 9.30-12.30","CB1303","INC, MTE, PTE (ปี1)"],
+  ["22","พ 9.30-12.30","CB1304","INC, MTE, PTE (ปี1)"],
+  ["23","พ 9.30-12.30","CB1403","INC, MTE, PTE (ปี1)"],
+  ["24","พ 13.30-16.30","CB1209","CHM (ปี1)"],
+  ["25","พ 13.30-16.30","CB1303","CHM (ปี1)"],
+  ["26","พ 13.30-16.30","CB1304","CHM (ปี1)"],
+  ["27","พฤ 9.30-12.30","CB1205","EEE (ปี1)"],
+  ["28","พฤ 9.30-12.30","CB1207","EEE (ปี1)"],
+  ["29","พฤ 13.30-16.30","CB1209","BIP_DIP, CTE, ETE, MEE (ปี1)"],
+  ["30","พฤ 13.30-16.30","CB1303","BIP_DIP, CTE, ETE, MEE (ปี1)"],
+  ["31","พฤ 13.30-16.30","CB1304","BIP_DIP, CTE, ETE, MEE (ปี1)"],
+  ["32","พฤ 13.30-16.30","CB1403","BIP_DIP, CTE, ETE, MEE (ปี1)"],
+  ["33","พฤ 13.30-16.30","CB1404","BIP_DIP, CTE, ETE, MEE (ปี1)"],
+  ["34","พฤ 13.30-16.30","CB2401","BIP_DIP, CTE, ETE, MEE (ปี1)"],
+  ["35","ศ 9.30-12.30","CB1205","CSS, CVT, EET, MET, PDT (ปี1)"],
+  ["36","ศ 9.30-12.30","CB1207","CSS, CVT, EET, MET, PDT (ปี1)"],
+  ["37","ศ 9.30-12.30","CB1301","CSS, CVT, EET, MET, PDT (ปี1)"],
+  ["38","ศ 9.30-12.30","CB1302","CSS, CVT, EET, MET, PDT (ปี1)"],
+  ["39","ศ 9.30-12.30","CB1209","INT (ปี1)"],
+  ["40","ศ 9.30-12.30","CB1303","INT (ปี1)"],
+  ["41","ศ 9.30-12.30","CB2407","INT (ปี1)"],
+  ["42","ศ 13.30-16.30","CB1209","CHE, MEN, STD, TEN (ปี1)"],
+  ["43","ศ 13.30-16.30","CB1303","CHE, MEN, STD, TEN (ปี1)"],
+  ["44","ศ 13.30-16.30","CB1304","CHE, MEN, STD, TEN (ปี1)"],
+  ["45","ศ 13.30-16.30","CB1403","CHE, MEN, STD, TEN (ปี1)"],
+  ["46","ศ 13.30-16.30","CB1404","CHE, MEN, STD, TEN (ปี1)"],
+  ["47","ศ 13.30-16.30","CB1301","CHE, MEN, STD, TEN (ปี1)"],
+  ["48","จ 9.30-12.30","CB1207","AME, PHY, PHY_MED (ปี1)"],
+  ["49","อ 13.30-16.30","CB2403","CVE, FST, MIC, MTH (ปี1)"],
+  ["50","ศ 13.30-16.30","CB1207","CHE, MEN, STD, TEN (ปี1)"],
+]],
+["LNG200","EFFECTIVE LISTENING",1,PRE_STD,[
+  ["1","พฤ 9.30-10.30","CB1402","FST 2, PHY_MED 2"],
+  ["2","พฤ 10.30-11.30","CB1402","FST 2, PHY_MED 2"],
+  ["3","พฤ 11.30-12.30","CB1402","FST 2, PHY_MED 2"],
+  ["4","พฤ 13.30-14.30","CB1402","PHY 2"],
+  ["5","พฤ 14.30-15.30","CB1402","PHY 2"],
+  ["6","พ 13.30-14.30","CB2304","CSC 2"],
+  ["7","พ 13.30-14.30","CB2305","CSC 2"],
+]],
+["LNG201","EXTENSIVE READING",1,PRE_STD,[
+  ["1","ศ 13.30-14.30","CB1305","MDA 2, MMD 2"],
+  ["2","ศ 14.30-15.30","CB1305","MDA 2, MMD 2"],
+  ["3","ศ 15.30-16.30","CB1305","MDA 2, MMD 2"],
+]],
+["LNG202","BASIC READING FOR SCIENCE AND TECHNOLOGY",1,PRE_STD,[
+  ["1","อ 8.30-9.30","CB1209","APE 2, TEN 2"],
+  ["2","พ 13.30-14.30","CB1403","INC 2"],
+  ["3","พ 14.30-15.30","CB1403","INC 2"],
+  ["4","พฤ 9.30-10.30","CB1209","CHM 2"],
+  ["5","พฤ 10.30-11.30","CB1209","CHM 2"],
+  ["6","พฤ 11.30-12.30","CB1209","CHM 2"],
+  ["7","ศ 8.30-9.30","CB1401","INT 2"],
+  ["8","ศ 8.30-9.30","CB1402","INT 2"],
+  ["9","ศ 9.30-10.30","CB1401","INT 2"],
+  ["10","ศ 9.30-10.30","CB1402","INT 2"],
+]],
+["LNG206","SELF-DIRECTED LEARNING",1,PRE_STD,[
+  ["1","อ 8.30-9.30","CB2503","TEN 2"],
+  ["2","อ 9.30-10.30","CB2503","MIC 2"],
+  ["3","อ 10.30-11.30","CB2503","MIC 2"],
+]],
+["LNG21001","ACADEMIC LISTENING",1,"{LNG21002+LNG21003 (Co)} หรือ {LNG11000 (Pre) + LNG21002+LNG21003 (Co)}",[
+  ["1","พ 9.30-12.30","CB1405","MCE, SEE (ปี1)"],
+  ["2","พ 9.30-12.30","CB1406","MCE, SEE (ปี1)"],
+  ["3","พ 13.30-16.30","CB2403","APE, ENE (ปี1)"],
+  ["4","พ 13.30-16.30","CB2404","APE, ENE (ปี1)"],
+  ["5","พ 13.30-16.30","CB1405","APE, ENE (ปี1)"],
+  ["6","พฤ 9.30-12.30","CB2401","ETM (ปี1)"],
+  ["7","พฤ 9.30-12.30","CB2403","ETM (ปี1)"],
+  ["8","พฤ 13.30-16.30","CB1307","PPT (ปี1)"],
+  ["9","ศ 9.30-12.30","SoLA801","CPE, ENV (ปี1)"],
+  ["10","ศ 9.30-12.30","SoLA401","CPE, ENV (ปี1)"],
+  ["11","ศ 13.30-16.30","CB2401","EEE_S, PRE (ปี1)"],
+  ["12","ศ 13.30-16.30","CB2403","EEE_S, PRE (ปี1)"],
+  ["41","อ 13.30-16.30","CB1406","CPE inter, ENV_EN (ปี1)"],
+  ["42","อ 13.30-16.30","CB2406","CPE inter, ENV_EN (ปี1)"],
+  ["88","ส 17.30-20.30","ONLINE","อื่น ๆ"],
+]],
+["LNG21002","ACADEMIC PRESENTATION",1,"LNG11000 (Pre) + LNG21001+LNG21003 (Co)",[
+  ["1","พ 9.30-12.30","CB1405","MCE, SEE (ปี1)"],
+  ["2","พ 9.30-12.30","CB1406","MCE, SEE (ปี1)"],
+  ["3","พ 13.30-16.30","CB2403","APE, ENE (ปี1)"],
+  ["4","พ 13.30-16.30","CB2404","APE, ENE (ปี1)"],
+  ["5","พ 13.30-16.30","CB1405","APE, ENE (ปี1)"],
+  ["6","พฤ 9.30-12.30","CB2401","ETM (ปี1)"],
+  ["7","พฤ 9.30-12.30","CB2403","ETM (ปี1)"],
+  ["8","พฤ 13.30-16.30","CB1307","PPT (ปี1)"],
+  ["9","ศ 9.30-12.30","SoLA801","CPE, ENV (ปี1)"],
+  ["10","ศ 9.30-12.30","SoLA401","CPE, ENV (ปี1)"],
+  ["11","ศ 13.30-16.30","CB2401","EEE_S, PRE (ปี1)"],
+  ["12","ศ 13.30-16.30","CB2403","EEE_S, PRE (ปี1)"],
+  ["41","อ 13.30-16.30","CB1406","CPE inter, ENV_EN (ปี1)"],
+  ["42","อ 13.30-16.30","CB2406","CPE inter, ENV_EN (ปี1)"],
+  ["88","ส 17.30-20.30","ONLINE","อื่น ๆ"],
+]],
+["LNG21003","ACADEMIC READING & WRITING",1,"LNG11000 (Pre) + LNG21001+LNG21002 (Co)",[
+  ["1","พ 9.30-12.30","CB1405","MCE, SEE (ปี1)"],
+  ["2","พ 9.30-12.30","CB1406","MCE, SEE (ปี1)"],
+  ["3","พ 13.30-16.30","CB2403","APE, ENE (ปี1)"],
+  ["4","พ 13.30-16.30","CB2404","APE, ENE (ปี1)"],
+  ["5","พ 13.30-16.30","CB1405","APE, ENE (ปี1)"],
+  ["6","พฤ 9.30-12.30","CB2401","ETM (ปี1)"],
+  ["7","พฤ 9.30-12.30","CB2403","ETM (ปี1)"],
+  ["8","พฤ 13.30-16.30","CB1307","PPT (ปี1)"],
+  ["9","ศ 9.30-12.30","SoLA801","CPE, ENV (ปี1)"],
+  ["10","ศ 9.30-12.30","SoLA401","CPE, ENV (ปี1)"],
+  ["11","ศ 13.30-16.30","CB2401","EEE_S, PRE (ปี1)"],
+  ["12","ศ 13.30-16.30","CB2403","EEE_S, PRE (ปี1)"],
+  ["41","อ 13.30-16.30","CB1406","CPE inter, ENV_EN (ปี1)"],
+  ["42","อ 13.30-16.30","CB2406","CPE inter, ENV_EN (ปี1)"],
+  ["88","ส 17.30-20.30","ONLINE","อื่น ๆ"],
+]],
+["LNG220","ACADEMIC ENGLISH",3,"LNG120 (Pre)",[
+  ["1","จ 9.30-12.30","CB1205","AME, MCE 2, PHY (ปี1)"],
+  ["2","อ 9.30-12.30","CB2401","FRA, HDS, MDA, MDT, MMD (ปี1)"],
+  ["3","อ 9.30-12.30","CB2403","FRA, HDS, MDA, MDT, MMD (ปี1)"],
+  ["4","อ 9.30-12.30","CB2404","FRA, HDS, MDA, MDT, MMD (ปี1)"],
+  ["5","อ 13.30-16.30","CB1504","CVE, FRA 2, FST, MIC, MTH"],
+  ["6","อ 13.30-16.30","CB2401","CVE, FRA 2, FST, MIC, MTH"],
+  ["7","พ 9.30-12.30","CB1205","INC, MTE, PTE (ปี1)"],
+  ["8","พ 13.30-16.30","CB1205","CHM 1, DSI 2"],
+  ["9","พ 13.30-16.30","CB1207","CHM 1, DSI 2"],
+  ["10","พฤ 9.30-12.30","CB1301","EEE (ปี1)"],
+  ["11","พฤ 13.30-16.30","CB1501","BIP_DIP, CTE, ETE, MEE (ปี1)"],
+  ["12","พฤ 13.30-16.30","CB1504","BIP_DIP, CTE, ETE, MEE (ปี1)"],
+  ["13","ศ 9.30-12.30","CB1305","CSS, CVT, EET, MET, PDT (ปี1)"],
+  ["14","ศ 13.30-16.30","CB1205","CHE, MEN, STD, TEN (ปี1)"],
+]],
+["LNG221","ACADEMIC ENGLISH IN INTERNATIONAL CONTEXTS",3,"-",[
+  ["1","อ 9.30-12.30","CB2602","EIE inter 1"],
+  ["2","อ 13.30-16.30","CB1401","CT 1, DD 3, INC_INTER 1"],
+  ["3","อ 13.30-16.30","CB1402","CT 1, DD 3, INC_INTER 1"],
+  ["4","อ 13.30-16.30","CB1405","CT 1, DD 3, INC_INTER 1"],
+  ["5","ศ 13.30-16.30","CB1405","AUT_DIP 1, CHE_INTER 1"],
+  ["6","ศ 13.30-16.30","CB1406","AUT_DIP 1, CHE_INTER 1"],
+  ["7","ศ 13.30-16.30","CB1407","AUT_DIP 1, CHE_INTER 1"],
+  ["8","พฤ 13.30-16.30","CB2403","CSC 1"],
+  ["9","พฤ 13.30-16.30","TBA","CSC 1"],
+  ["31","อ 16.30-18.30|พ 15.30-17.30","TBA","CVE inter 1"],
+  ["32","อ 16.30-18.30|พ 15.30-17.30","TBA","CVE inter 1"],
+]],
+["LNG223","ENGLISH FOR WORKPLACE COMMUNICATION",3,"LNG102/LNG220/LNG222 (Pre) หรือ LNG120+LNG220 หรือ LNG221+LNG222",[
+  ["1","จ 9.30-12.30","CB1302","MCE 2"],
+  ["2","อ 9.30-12.30","CB1205","CPE 2, HDS 2"],
+  ["3","อ 13.30-16.30","CB1207","CSS 2, CVT 2, MET 2"],
+  ["4","อ 13.30-16.30","CB1301","CSS 2, CVT 2, MET 2"],
+  ["5","อ 13.30-16.30","CB1302","CSS 2, CVT 2, MET 2"],
+  ["6","พ 9.30-12.30","CB1301","CHE 2, EEE 2"],
+  ["7","พ 9.30-12.30","CB1302","CHE 2, EEE 2"],
+  ["8","พ 9.30-12.30","CB1305","CHE 2, EEE 2"],
+  ["9","พ 13.30-16.30","CB1404","EET 2, ETM 2, PDT 2"],
+  ["10","พ 13.30-16.30","CB1501","EET 2, ETM 2, PDT 2"],
+  ["11","พ 13.30-16.30","CB1504","EET 2, ETM 2, PDT 2"],
+  ["12","พ 13.30-16.30","CB2401","EET 2, ETM 2, PDT 2"],
+  ["13","พฤ 9.30-12.30","CB1405","AME 2, EEE_S 2, MEE 2"],
+  ["14","พฤ 9.30-12.30","CB1406","AME 2, EEE_S 2, MEE 2"],
+  ["15","พฤ 9.30-12.30","CB1407","AME 2, EEE_S 2, MEE 2"],
+  ["16","พฤ 9.30-12.30","CB1505","AME 2, EEE_S 2, MEE 2"],
+  ["17","ศ 9.30-12.30","CB1405","BIP_DIP 2, PRE 2"],
+  ["18","ศ 9.30-12.30","CB1406","BIP_DIP 2, PRE 2"],
+  ["19","ศ 13.30-16.30","CB1307","MMD 2"],
+  ["20","ส 9.30-12.30","CB1207","ETM 2C"],
+]],
+["LNG224","ORAL COMMUNICATION I",3,"LNG103/LNG107/LNG220/LNG222 (Pre) หรือ LNG120+LNG220 หรือ LNG221+LNG222",[
+  ["1","อ 13.30-16.30","CB2407","CSS 2, CVT 2, FRA 2, MET 2"],
+  ["2","อ 13.30-16.30","CB2408","CSS 2, CVT 2, FRA 2, MET 2"],
+  ["3","พ 13.30-16.30","CB1302","ETM 2 + อื่น ๆ"],
+  ["4","อ 9.30-12.30","CB2313","DSI 2, INT 4"],
+  ["5","พ 9.30-12.30","CB2313","DSI 2, INT 4"],
+  ["6","พ 13.30-16.30","CB2306","DSI 2, INT 4"],
+]],
+["LNG250","THAI FOR COMMUNICATION AND CAREERS",3,"-",[
+  ["1","ส 9.30-12.30","CB1301","ETE 2"],
+  ["2","ส 9.30-12.30","CB1302","ETE 2"],
+  ["3","ส 9.30-12.30","SoLA803","ETE 2"],
+  ["4","ส 13.30-16.30","CB1301","MTE 2"],
+  ["5","ส 13.30-16.30","SoLA803","PTE 2"],
+]],
+["LNG251","SPEAKING SKILLS IN THAI",3,"-",[
+  ["1","พฤ 13.30-16.30","SoLA803","อื่น ๆ (ทุกคณะ)"],
+]],
+["LNG260","SURVIVAL THAI FOR FOREIGN STUDENTS",3,"-",[
+  ["1","อ 13.30-16.30","SoLA801","อื่น ๆ (ทุกคณะ)"],
+]],
+["LNG270","GERMAN I",3,"-",[
+  ["1","อ 13.30-16.30","SoLA403","อื่น ๆ (ทุกคณะ)"],
+]],
+["LNG272","JAPANESE I",3,"-",[
+  ["1","ส 9.30-12.30","CB1209","อื่น ๆ (ทุกคณะ)"],
+  ["2","ส 9.30-12.30","CB1303","อื่น ๆ (ทุกคณะ)"],
+  ["3","ส 9.30-12.30","CB1304","อื่น ๆ (ทุกคณะ)"],
+  ["4","ส 13.30-16.30","CB1303","อื่น ๆ (ทุกคณะ)"],
+  ["5","ส 13.30-16.30","CB1304","อื่น ๆ (ทุกคณะ)"],
+]],
+["LNG275","CHINESE I",3,"-",[
+  ["1","อ 9.30-12.30","SoLA801","อื่น ๆ (ทุกคณะ)"],
+  ["2","พ 13.30-16.30","CB2407","อื่น ๆ (ทุกคณะ)"],
+  ["3","พฤ 9.30-12.30","CB2408","อื่น ๆ (ทุกคณะ)"],
+  ["4","พฤ 13.30-16.30","CB2408","อื่น ๆ (ทุกคณะ)"],
+  ["5","ส 9.30-12.30","CB1403","อื่น ๆ (ทุกคณะ)"],
+  ["99","อ 9.30-12.30","TBA","ISY 2-4",["ดร.ภานุกรณ์ จันทร์สว่าง"]],
+]],
+["LNG281","BASIC KOREAN",3,"-",[
+  ["1","อ 9.30-12.30","CB2604","อื่น ๆ (ทุกคณะ)"],
+  ["2","อ 13.30-16.30","CB2604","อื่น ๆ (ทุกคณะ)"],
+  ["3","พ 13.30-16.30","SoLA803","อื่น ๆ (ทุกคณะ)"],
+  ["4","ศ 9.30-12.30","SoLA803","อื่น ๆ (ทุกคณะ)"],
+  ["5","ศ 13.30-16.30","SoLA803","อื่น ๆ (ทุกคณะ)"],
+]],
+["LNG301","ABSTRACT WRITING",1,PRE_STD,[
+  ["1","พฤ 8.30-9.30","CB1401","MMD 4"],
+  ["2","พฤ 9.30-10.30","CB1401","STD 3"],
+  ["3","พฤ 10.30-11.30","CB1401","STD 3"],
+]],
+["LNG302","LABORATORY REPORT WRITING",1,PRE_STD,[
+  ["1","อ 8.30-9.30","CB1205","APE 2"],
+]],
+["LNG303","ORAL PRESENTATION SKILLS",1,"LNG220/LNG222 (Pre) หรือ LNG120+LNG220 หรือ LNG221+LNG222",[
+  ["1","อ 8.30-9.30","CB1303","FST 3, MIC 3"],
+  ["2","อ 8.30-9.30","CB2502","FST 3, MIC 3"],
+  ["3","อ 9.30-10.30","CB2502","FST 3, MIC 3"],
+  ["4","พฤ 8.30-9.30","CB2402","MDA 3, MMD 3"],
+  ["5","พฤ 9.30-10.30","CB2402","MDA 3, MMD 3"],
+  ["6","พฤ 10.30-11.30","CB2402","MDA 3, MMD 3"],
+  ["7","พฤ 11.30-12.30","CB2402","MDA 3, MMD 3"],
+  ["8","พฤ 9.30-10.30","CB2405","CHM 3"],
+  ["9","พฤ 10.30-11.30","CB2405","CHM 3"],
+  ["10","พฤ 11.30-12.30","CB2405","CHM 3"],
+  ["11","ศ 8.30-9.30","CB1407","MEN 2"],
+  ["12","ศ 9.30-10.30","CB1407","MEN 2"],
+  ["13","ศ 8.30-9.30","CB1505","STD 3"],
+  ["14","ศ 9.30-10.30","CB1505","STD 3"],
+  ["15","ศ 10.30-11.30","CB1505","MTH 2"],
+]],
+["LNG307","INTERNATIONAL EMAILING",1,PRE_STD,[
+  ["1","พ 13.30-14.30","CB1305","INC 3, INC_SAHA 3"],
+  ["2","พ 14.30-15.30","CB1305","INC 3, INC_SAHA 3"],
+]],
+["LNG308","TECHNICAL REPORT WRITING",1,PRE_STD,[
+  ["1","พฤ 8.30-9.30","CB2406","MTH 3"],
+  ["2","พฤ 9.30-10.30","CB2406","MTE 3"],
+  ["3","อ 14.00-15.00","CB2305","INT 3"],
+  ["4","อ 15.00-16.00","CB2305","INT 3"],
+  ["5","พ 15.00-16.00","CB2305","INT 3"],
+  ["6","ศ 11.30-12.30","CB2305","INT 3"],
+  ["7","พ 9.30-10.30","CB2305","CSC 4"],
+  ["8","พ 11.00-12.00","CB2305","CSC 4"],
+]],
+["LNG320","CONTENT-BASED ENGLISH LEARNING",3,PRE_STD,[
+  ["1","อ 9.30-12.30","CB1207","CPE 2, HDS 2"],
+  ["2","อ 9.30-12.30","CB1301","CPE 2, HDS 2"],
+  ["3","ศ 13.30-16.30","CB1401","MDA 2"],
+  ["4","ศ 13.30-16.30","CB1402","MDA 2"],
+  ["5","อ 13.30-16.30","CB2313","INT 4"],
+  ["6","พ 13.30-16.30","CB2313","INT 4"],
+  ["7","ศ 13.30-16.30","CB2304","CSC 3"],
+  ["8","ศ 13.30-16.30","TBA","CSC 3"],
+]],
+["LNG321","ACADEMIC READING AND WRITING IN INTERNATIONAL CONTEXTS",3,"LNG222 (Pre) หรือ LNG221+LNG222 (Pre)",[
+  ["1","จ 9.30-12.30","CB1305","CPE inter 2, CT 3"],
+  ["2","จ 9.30-12.30","CB1307","CPE inter 2, CT 3"],
+  ["3","จ 9.30-12.30","CB1401","CPE inter 2, CT 3"],
+  ["4","ศ 13.30-16.30","CB1501","CHE_INTER 2, DD 4"],
+  ["5","ศ 13.30-16.30","CB1504","CHE_INTER 2, DD 4"],
+  ["31","อ 13.30-15.30|พ 9.30-11.30","TBA","CVE inter 2"],
+  ["32","อ 13.30-15.30|พ 9.30-11.30","TBA","CVE inter 2"],
+]],
+["LNG322","ACADEMIC WRITING I",3,"LNG103/LNG107/LNG220/LNG222 (Pre) หรือ LNG120+LNG220 หรือ LNG221+LNG222",[
+  ["1","อ 13.30-16.30","CB1305","AUT_DIP 2, INC_INTER 2"],
+  ["2","อ 13.30-16.30","CB1307","AUT_DIP 2, INC_INTER 2"],
+]],
+["LNG323","ENGLISH FOR DIGITAL SERVICE INNOVATION",3,PRE_STD,[
+  ["1","อ 9.30-12.30","CB2504","DSI 3"],
+  ["2","พฤ 9.30-12.30","CB1303","MDT 2"],
+  ["3","พฤ 9.30-12.30","CB1304","MDT 2"],
+  ["4","พฤ 13.30-16.30","CB1301","CMM 4"],
+  ["5","พฤ 13.30-16.30","CB1302","CMM 4"],
+  ["6","พฤ 13.30-16.30","CB1305","CMM 4"],
+]],
+["LNG324","ENGLISH FOR ENGINEERS",3,"LNG220/LNG222 (Pre) หรือ LNG120+LNG220 หรือ LNG221+LNG222",[
+  ["1","พ 9.30-12.30","CB1307","CHE 2, EEE 2"],
+  ["2","พ 9.30-12.30","CB1401","CHE 2, EEE 2"],
+  ["3","พ 9.30-12.30","CB1402","CHE 2, EEE 2"],
+  ["4","พฤ 9.30-12.30","CB1403","AME 2, EEE_S 2, MEE 2"],
+  ["5","พฤ 9.30-12.30","CB1404","AME 2, EEE_S 2, MEE 2"],
+  ["6","พฤ 9.30-12.30","CB1501","AME 2, EEE_S 2, MEE 2"],
+  ["7","พฤ 9.30-12.30","CB1504","AME 2, EEE_S 2, MEE 2"],
+  ["8","ศ 9.30-12.30","CB1304","BIP_DIP 2, CVE 2, PRE 2"],
+  ["9","ศ 9.30-12.30","CB1403","BIP_DIP 2, CVE 2, PRE 2"],
+  ["10","ศ 9.30-12.30","CB1404","BIP_DIP 2, CVE 2, PRE 2"],
+  ["11","ศ 9.30-12.30","CB1501","BIP_DIP 2, CVE 2, PRE 2"],
+]],
+["LNG328","BASIC TRANSLATION",3,PRE_STD,[
+  ["1","พ 9.30-12.30","CB1407","อื่น ๆ (ทุกคณะ)"],
+]],
+["LNG331","ENGLISH FOR EMPLOYMENT",3,"LNG103/LNG107/LNG220/LNG222 (Pre) หรือ LNG120+LNG220 หรือ LNG221+LNG222",[
+  ["1","อ 13.30-16.30","SoLA401","อื่น ๆ (ทุกคณะ)"],
+  ["2","พ 13.30-16.30","SoLA401","อื่น ๆ (ทุกคณะ)"],
+]],
+["LNG332","BUSINESS ENGLISH",3,PRE_STD,[
+  ["1","พฤ 9.30-12.30","CB2404","MDA 3, MMD 3"],
+  ["2","พฤ 9.30-12.30","CB2407","MDT 2"],
+  ["3","ศ 13.30-16.30","CB1505","อื่น ๆ (ทุกคณะ)"],
+]],
+["LNG422","READING APPRECIATION",3,PRE_STD,[
+  ["1","ศ 13.30-16.30","SoLA801","อื่น ๆ (ทุกคณะ)"],
+]],
+["LNG425","INTERCULTURAL COMMUNICATION",3,PRE_STD + " หรือ LRC22001+LRC22002+LRC22003 (Pre)",[
+  ["1","อ 13.30-16.30","CB1407","อื่น ๆ (ทุกคณะ)"],
+]],
+];
+
+// ═══ สร้าง data ═══
+const PALETTE = ["#d6336c","#ae3ec9","#7048e8","#4263eb","#1c7ed6","#1098ad","#0ca678","#37b24d","#74b816","#f59f00","#f76707","#e8590c","#c92a2a","#862e9c","#5f3dc4","#3b5bdb","#0b7285","#087f5b"];
+
+const CPE_COURSES = CPE_DEFS.map(([idcode, name, credits, prereq, color, secs]) => {
+  const [id, code] = idcode.includes("|") ? idcode.split("|") : [idcode, idcode];
+  return {
+    id, code, name, credits, prereq, color, type: "CPE",
+    exam: "จัดสอบเอง (กลางภาค/ปลายภาค)", link: null,
+    sections: secs.map(([sec, slots, room, groups, teachers]) => ({
+      sec, room, groups, teachers: teachers || null, slots: parseSlots(slots), intl: false,
+    })),
+  };
+});
+
+const GEN_COURSES = Object.keys(GEN_NAMES).map((code, i) => ({
+  id: code, code, name: GEN_NAMES[code], credits: 3, prereq: "-", type: "GEN",
+  exam: "ดูประกาศของ GenEd", color: PALETTE[i % PALETTE.length],
+  link: "https://gened.kmutt.ac.th/" + code.toLowerCase(),
+  sections: GEN_RAW.filter(r => r[0] === code).map(r => ({
+    sec: r[1], room: r[4], groups: r[2] === "I" ? "หลักสูตรนานาชาติ" : "หลักสูตรปกติ",
+    teachers: r[5].split(",").map(s => s.trim()), slots: parseSlots(r[3]), intl: r[2] === "I",
+  })),
+}));
+
+const LNG_COURSES = LNG_DEFS.map(([code, name, credits, prereq, secs], i) => ({
+  id: code, code, name, credits, prereq, type: "LNG",
+  exam: "จัดสอบเอง (กลางภาค/ปลายภาค)", color: PALETTE[(i + 7) % PALETTE.length], link: null,
+  sections: secs.map(([sec, slots, room, groups, teachers]) => ({
+    sec, room, groups, teachers: teachers || null, slots: parseSlots(slots),
+    intl: /inter/i.test(groups),
+  })),
+}));
+
+const ALL = [...CPE_COURSES, ...GEN_COURSES, ...LNG_COURSES];
+const byId = Object.fromEntries(ALL.map(c => [c.id, c]));
+const LNG_SEC_COUNT = LNG_COURSES.reduce((s, c) => s + c.sections.length, 0);
+const GEN_SEC_COUNT = GEN_COURSES.reduce((s, c) => s + c.sections.length, 0);
+
+// selected: Map key = "courseId||secIdx"
+const selected = new Map();
+const selKey = (cid, si) => cid + "||" + si;
+
+function fmtTime(h) {
+  const hh = Math.floor(h), mm = Math.round((h - hh) * 60);
+  return String(hh).padStart(2, "0") + ":" + String(mm).padStart(2, "0");
+}
+function slotStr(sl) { return DAYS[sl.day-1] + " " + fmtTime(sl.start) + "–" + fmtTime(sl.end) + " น."; }
+function slotsStr(s) { return s.slots.map(slotStr).join(" + "); }
+
+const FMT_LABEL = { online: "Online", blended: "Blended", "on-site": "On-site" };
+function fmtBadge(s) {
+  let out = "";
+  if (FMT_LABEL[s.room]) {
+    const cls = s.room === "online" ? "online" : s.room === "blended" ? "blended" : "onsite";
+    out += `<span class="fmt ${cls}">${FMT_LABEL[s.room]}</span>`;
+  }
+  if (s.intl) out += ` <span class="fmt inter">Inter</span>`;
+  return out;
+}
+function roomLabel(s) { return FMT_LABEL[s.room] || s.room; }
+function teacherStr(s) { return s.teachers ? s.teachers.join(", ") : "รอประกาศ"; }
+
+// ── Sidebar ──
+function buildSidebar() {
+  const list = document.getElementById("courseList");
+  list.innerHTML = "";
+  const groups = [
+    ["วิชาภาค CPE ปี 4", CPE_COURSES],
+    [`วิชาศึกษาทั่วไป (GEN)`, GEN_COURSES],
+    [`วิชาภาษา (LNG) — คณะศิลปศาสตร์`, LNG_COURSES],
+  ];
+  groups.forEach(([title, arr]) => {
+    const h = document.createElement("div");
+    h.className = "group-header";
+    h.innerHTML = `${title} <span class="cnt">${arr.length} วิชา</span>`;
+    list.appendChild(h);
+    arr.forEach(c => list.appendChild(courseCard(c)));
+  });
+  updateHint("");
+}
+
+function courseCard(c) {
+  const card = document.createElement("div");
+  card.className = "course-card";
+  card.style.setProperty("--cc", c.color);
+  card.id = "card-" + c.id;
+  card.dataset.search = (c.code + " " + c.name + " " +
+    c.sections.map(s => (s.teachers || []).join(" ") + " " + s.groups).join(" ")).toLowerCase();
+
+  const secRows = c.sections.map((s, i) => `
+    <label class="sec-row" id="row-${c.id}-${i}">
+      <input type="checkbox" data-cid="${c.id}" data-si="${i}">
+      <span class="sec-main">
+        <span class="sec-title">Sec ${s.sec} · ${slotsStr(s)}</span> ${fmtBadge(s)}<br>
+        <span class="sec-sub">${FMT_LABEL[s.room] ? "" : "ห้อง " + s.room + " · "}สำหรับ: ${s.groups}${s.teachers ? "<br>👨‍🏫 " + s.teachers.join(", ") : ""}</span>
+      </span>
+    </label>`).join("");
+
+  card.innerHTML = `
+    <div class="course-code">${c.code} · ${c.credits} หน่วยกิต</div>
+    <div class="course-name">${c.name}</div>
+    <div class="sec-list ${c.sections.length > 5 ? "tall" : ""}">${secRows}</div>
+    <button class="detail-btn" data-id="${c.id}">ดูรายละเอียด ›</button>
+    <span class="cc-dot"></span>`;
+
+  card.querySelectorAll("input[type=checkbox]").forEach(chk => {
+    chk.addEventListener("change", () => toggleSec(c.id, +chk.dataset.si, chk.checked));
+  });
+  card.querySelector(".detail-btn").addEventListener("click", () => openModal(c.id));
+  return card;
+}
+
+// เลือกกลุ่ม: 1 วิชาเลือกได้ section เดียว (ติ๊กใหม่ = ย้าย)
+function toggleSec(cid, si, on) {
+  if (on) {
+    byId[cid].sections.forEach((_, i) => { if (i !== si) selected.delete(selKey(cid, i)); });
+    selected.set(selKey(cid, si), { cid, si });
+  } else {
+    selected.delete(selKey(cid, si));
+  }
+  syncUI();
+}
+
+function syncUI() {
+  ALL.forEach(c => {
+    let any = false;
+    c.sections.forEach((_, i) => {
+      const on = selected.has(selKey(c.id, i));
+      if (on) any = true;
+      const row = document.getElementById(`row-${c.id}-${i}`);
+      if (row) { row.classList.toggle("on", on); row.querySelector("input").checked = on; }
+    });
+    const card = document.getElementById("card-" + c.id);
+    if (card) card.classList.toggle("has-selected", any);
+  });
+  render();
+}
+
+// ── Search ──
+function updateHint(q, counts) {
+  const el = document.getElementById("searchHint");
+  if (!q) {
+    el.textContent = `ทั้งหมด: CPE ${CPE_COURSES.length} วิชา · GEN ${GEN_COURSES.length} วิชา (${GEN_SEC_COUNT} กลุ่ม) · LNG ${LNG_COURSES.length} วิชา (${LNG_SEC_COUNT} กลุ่ม)`;
+  } else {
+    el.textContent = `พบ ${counts.total} วิชา (CPE ${counts.cpe} · GEN ${counts.gen} · LNG ${counts.lng})`;
+  }
+}
+document.getElementById("searchInput").addEventListener("input", e => {
+  const q = e.target.value.trim().toLowerCase();
+  const counts = { cpe: 0, gen: 0, lng: 0, total: 0 };
+  ALL.forEach(c => {
+    const card = document.getElementById("card-" + c.id);
+    const hit = !q || card.dataset.search.includes(q);
+    card.classList.toggle("hidden", !hit);
+    if (hit && q) { counts[c.type.toLowerCase()]++; counts.total++; }
+  });
+  updateHint(q, counts);
+});
+
+// ── Calendar grid ──
+function buildCalendar() {
+  const cal = document.getElementById("calendar");
+  cal.innerHTML = "";
+  const totalH = (DAY_END - DAY_START) * HOUR_PX;
+
+  const corner = document.createElement("div");
+  corner.className = "cal-head corner";
+  corner.textContent = "เวลา";
+  cal.appendChild(corner);
+  DAYS.forEach((d, i) => {
+    const el = document.createElement("div");
+    el.className = "cal-head" + (i === 5 ? " sat" : "");
+    el.textContent = d;
+    cal.appendChild(el);
+  });
+
+  const tc = document.createElement("div");
+  tc.className = "time-col";
+  tc.style.height = totalH + "px";
+  for (let h = DAY_START; h <= DAY_END; h++) {
+    const lb = document.createElement("div");
+    lb.className = "time-label";
+    lb.style.top = (h - DAY_START) * HOUR_PX + "px";
+    lb.textContent = fmtTime(h);
+    tc.appendChild(lb);
+  }
+  cal.appendChild(tc);
+
+  for (let d = 1; d <= 6; d++) {
+    const col = document.createElement("div");
+    col.className = "day-col" + (d === 6 ? " sat" : "");
+    col.id = "day-" + d;
+    col.style.height = totalH + "px";
+    for (let h = DAY_START + 1; h < DAY_END; h++) {
+      const ln = document.createElement("div");
+      ln.className = "hour-line";
+      ln.style.top = (h - DAY_START) * HOUR_PX + "px";
+      col.appendChild(ln);
+    }
+    cal.appendChild(col);
+  }
+}
+
+// ── วางบล็อก + จัดคอลัมน์เมื่อชนกัน ──
+function render() {
+  document.querySelectorAll(".block").forEach(b => b.remove());
+  // แตกทุก slot ของทุก section ที่เลือก
+  const items = [];
+  selected.forEach(({ cid, si }) => {
+    const c = byId[cid], s = c.sections[si];
+    s.slots.forEach(sl => items.push({ c, s, sl }));
+  });
+  let clashFound = false;
+
+  for (let d = 1; d <= 6; d++) {
+    const dayItems = items.filter(x => x.sl.day === d).sort((a, b) => a.sl.start - b.sl.start);
+    const clusters = [];
+    let cur = [], curEnd = -1;
+    dayItems.forEach(x => {
+      if (cur.length && x.sl.start < curEnd) { cur.push(x); curEnd = Math.max(curEnd, x.sl.end); }
+      else { if (cur.length) clusters.push(cur); cur = [x]; curEnd = x.sl.end; }
+    });
+    if (cur.length) clusters.push(cur);
+
+    const col = document.getElementById("day-" + d);
+    clusters.forEach(cluster => {
+      const n = cluster.length;
+      if (n > 1) clashFound = true;
+      cluster.forEach((x, i) => {
+        const { c, s, sl } = x;
+        const b = document.createElement("div");
+        b.className = "block" + (n > 1 ? " clash" : "");
+        b.style.background = c.color;
+        b.style.top = (sl.start - DAY_START) * HOUR_PX + 2 + "px";
+        b.style.height = (sl.end - sl.start) * HOUR_PX - 4 + "px";
+        b.style.left = `calc(${(i / n) * 100}% + 3px)`;
+        b.style.width = `calc(${100 / n}% - 6px)`;
+        b.style.zIndex = 2 + i;
+        const nm = n > 2 ? "" : (c.name.length > 38 ? c.name.slice(0, 36) + "…" : c.name);
+        b.innerHTML = `<b>${c.code} S${s.sec}</b>${nm}<span class="rm"><br>${roomLabel(s)} · ${fmtTime(sl.start)}–${fmtTime(sl.end)}</span>`;
+        b.title = `${c.code} ${c.name} (Sec ${s.sec})\n${slotStr(sl)} · ${roomLabel(s)}`;
+        b.addEventListener("click", () => openModal(c.id));
+        col.appendChild(b);
+      });
+    });
+  }
+
+  const credits = [...new Set([...selected.values()].map(x => x.cid))]
+    .reduce((sum, cid) => sum + byId[cid].credits, 0);
+  document.getElementById("creditBadge").textContent =
+    `${credits} หน่วยกิต · ${selected.size} วิชา`;
+  document.getElementById("conflictBadge").classList.toggle("show", clashFound);
+}
+
+// ── Modal รายละเอียด ──
+function openModal(id) {
+  const c = byId[id];
+  const body = document.getElementById("modalBody");
+  body.style.setProperty("--cc", c.color);
+
+  const grpRows = c.sections.map((s, i) => `
+    <label class="grp-row ${selected.has(selKey(c.id, i)) ? "on" : ""}">
+      <input type="checkbox" data-si="${i}" ${selected.has(selKey(c.id, i)) ? "checked" : ""}>
+      <span><b>Sec ${s.sec}</b> · ${slotsStr(s)} · ${roomLabel(s)}${s.intl ? " · Inter" : ""}<br>
+      <small style="color:var(--muted)">สำหรับ: ${s.groups} · 👨‍🏫 ${teacherStr(s)}</small></span>
+    </label>`).join("");
+
+  const typeLabel = c.type === "GEN" ? "วิชาศึกษาทั่วไป มจธ."
+    : c.type === "LNG" ? "สายวิชาภาษา คณะศิลปศาสตร์"
+    : "ภาควิชาวิศวกรรมคอมพิวเตอร์ · ห้อง 4A, 4B";
+
+  body.innerHTML = `
+    <span class="tag">${c.code}${c.type === "CPE" ? " · ปี 4" : " · " + c.type}</span>
+    <h3>${c.name}</h3>
+    <div class="thname">ภาคการศึกษา 1/2569 · ${typeLabel}</div>
+    <table>
+      <tr><td>หน่วยกิต</td><td>${c.credits}</td></tr>
+      <tr><td>วิชาบังคับก่อน</td><td>${c.prereq}</td></tr>
+      <tr><td>การสอบ</td><td>${c.exam}</td></tr>
+      ${c.link ? `<tr><td>เว็บไซต์วิชา</td><td><a href="${c.link}" target="_blank">${c.link}</a></td></tr>` : ""}
+    </table>
+    <p style="font-size:.8rem;font-weight:600;margin:14px 0 8px">เลือกกลุ่มเรียน (ได้ 1 กลุ่มต่อวิชา · ${c.sections.length} กลุ่ม):</p>
+    <div class="grp-wrap">${grpRows}</div>
+    <div class="close-row">
+      <button class="close" id="modalClose">ปิด</button>
+    </div>`;
+
+  body.querySelectorAll(".grp-row input").forEach(chk => {
+    chk.addEventListener("change", () => {
+      toggleSec(c.id, +chk.dataset.si, chk.checked);
+      openModal(c.id);
+    });
+  });
+  document.getElementById("modalClose").addEventListener("click", closeModal);
+  document.getElementById("overlay").classList.add("show");
+}
+function closeModal() { document.getElementById("overlay").classList.remove("show"); }
+document.getElementById("overlay").addEventListener("click", e => {
+  if (e.target.id === "overlay") closeModal();
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+
+buildSidebar();
+buildCalendar();
+render();
+</script>
+</body>
+</html>
