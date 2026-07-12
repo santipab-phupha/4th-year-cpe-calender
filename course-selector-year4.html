@@ -1267,10 +1267,14 @@ function courseCard(c) {
   return card;
 }
 
-// เลือกกลุ่ม: 1 วิชาเลือกได้ section เดียว (ติ๊กใหม่ = ย้าย)
+// เลือกกลุ่ม: รหัสวิชาเดียวกันลงได้ตัวเดียว แม้คนละหัวข้อ/คนละ section
+// (เช่น CPE393 มี 3 หัวข้อ, CPE494 มี 5 หัวข้อ — ติ๊กตัวใหม่ = ย้ายให้อัตโนมัติ)
 function toggleSec(cid, si, on) {
   if (on) {
-    byId[cid].sections.forEach((_, i) => { if (i !== si) selected.delete(selKey(cid, i)); });
+    const code = byId[cid].code;
+    [...selected.values()].forEach(({ cid: ocid, si: osi }) => {
+      if (byId[ocid] && byId[ocid].code === code) selected.delete(selKey(ocid, osi));
+    });
     selected.set(selKey(cid, si), { cid, si });
   } else {
     selected.delete(selKey(cid, si));
