@@ -420,6 +420,71 @@
   .theme-cute .ps-title::after { content: " ✧"; }
   .theme-cute .ps-ch { background: #fdeef4; }
 
+  /* ── Horizontal calendar (วันเป็นแถว) ── */
+  .cal-h {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    min-width: 980px;
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    overflow: hidden;
+  }
+  .ch-corner, .ch-dlabel {
+    border-bottom: 1px solid var(--border);
+    padding: 6px;
+    font-weight: 700;
+    font-size: .8rem;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ch-dlabel.sat { color: #9c36b5; background: #fdfaff; }
+  .ch-hours { position: relative; height: 30px; border-bottom: 1px solid var(--border); border-left: 1px solid var(--border); }
+  .ch-hlb { position: absolute; top: 7px; transform: translateX(-50%); font-size: .66rem; color: var(--muted); }
+  .ch-row { position: relative; height: 64px; border-bottom: 1px solid var(--border); border-left: 1px solid var(--border); }
+  .ch-row.sat { background: #fdfaff; }
+  .ch-vline { position: absolute; top: 0; bottom: 0; border-left: 1px solid #eef1f7; }
+  .ch-row .block { font-size: .64rem; padding: 3px 6px; }
+
+  /* วิชาที่เลือกแต่ไม่ระบุเวลา */
+  #noTimeBar {
+    background: #fff9db;
+    border: 1px solid #ffe066;
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: .78rem;
+    margin-bottom: 12px;
+  }
+
+  .seat-badge {
+    display: inline-block; font-size: .64rem; font-weight: 700;
+    padding: 1px 7px; border-radius: 999px;
+    background: #e7f5ff; color: #1971c2; vertical-align: 1px;
+  }
+  .del-course {
+    position: absolute; top: 8px; right: 30px;
+    background: none; border: none; cursor: pointer;
+    color: var(--danger); font-size: .85rem; padding: 2px;
+  }
+  .cst-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .cst-grid label { font-size: .74rem; font-weight: 600; color: #3a4258; display: block; margin-bottom: 3px; }
+  .cst-grid input, .cst-grid select {
+    width: 100%; padding: 7px 9px;
+    border: 1.5px solid var(--border); border-radius: 8px;
+    font-family: inherit; font-size: .8rem; outline: none; background: #fff;
+  }
+  .cst-grid input:focus, .cst-grid select:focus { border-color: var(--accent); }
+  .cst-grid .full { grid-column: 1 / -1; }
+
+  /* print sheet: แถวแนวนอน */
+  .ps .ch-row { height: 52px; }
+  .ps .ch-hours { height: 26px; }
+  .ps .ch-corner, .ps .ch-dlabel { font-size: .72rem; padding: 4px; }
+  .ps .ch-row .block { border-radius: 5px; box-shadow: none; }
+  .ps .psh { display: grid; grid-template-columns: 84px 1fr; border: 1px solid #ccd2de; border-radius: 8px; overflow: hidden; background: #fff; }
+  .theme-night .psh { background: #232738; border-color: #3a4160; }
+  .theme-night .ch-corner, .theme-night .ch-dlabel, .theme-night .ch-hours, .theme-night .ch-row { border-color: #3a4160; }
+  .theme-night .ch-vline { border-color: #2c3149; }
+
   /* ── @media print ────────────────────── */
   @media print {
     body { overflow: visible; height: auto; display: block; }
@@ -451,6 +516,8 @@
   <div class="spacer"></div>
   <span class="conflict-badge" id="conflictBadge">⚠ เวลาเรียนชนกัน!</span>
   <span class="credit-badge" id="creditBadge">0 หน่วยกิต · 0 วิชา</span>
+  <button class="print-btn" id="viewBtn">🔄 แนวนอน</button>
+  <button class="print-btn" id="addBtn">➕ เพิ่มวิชา</button>
   <button class="print-btn" id="shareBtn">📤 แชร์</button>
   <button class="print-btn" id="printBtn">🖨️ พิมพ์ตาราง</button>
 </header>
@@ -465,12 +532,50 @@
   </aside>
 
   <main>
+    <div id="noTimeBar" style="display:none"></div>
     <div class="cal-wrap" id="calendar"></div>
   </main>
 </div>
 
 <div class="overlay" id="overlay">
   <div class="modal" id="modalBody"></div>
+</div>
+
+<div class="overlay" id="customModal">
+  <div class="modal" style="max-width:500px">
+    <h3 style="margin-bottom:4px">➕ เพิ่มวิชาเอง</h3>
+    <div class="thname">วิชานอกลิสต์ / วิชาคณะอื่น ใส่เองได้เลย เซฟติดเครื่องอัตโนมัติ</div>
+    <div class="cst-grid">
+      <div><label>รหัสวิชา *</label><input type="text" id="cCode" placeholder="เช่น MTH234"></div>
+      <div><label>หน่วยกิต</label><input type="number" id="cCredits" value="3" min="0" max="12"></div>
+      <div class="full"><label>ชื่อวิชา *</label><input type="text" id="cName" placeholder="เช่น LINEAR ALGEBRA"></div>
+      <div><label>ห้องเรียน</label><input type="text" id="cRoom" placeholder="เช่น SC2111"></div>
+      <div><label>อาจารย์</label><input type="text" id="cTeacher" placeholder="ไม่บังคับ"></div>
+      <div><label>วัน (คาบ 1) *</label><select id="cDay1">
+        <option value="1">จันทร์</option><option value="2">อังคาร</option><option value="3">พุธ</option>
+        <option value="4">พฤหัสบดี</option><option value="5">ศุกร์</option><option value="6">เสาร์</option>
+      </select></div>
+      <div style="display:flex;gap:6px">
+        <div style="flex:1"><label>เริ่ม</label><input type="time" id="cStart1" value="09:30" step="1800"></div>
+        <div style="flex:1"><label>จบ</label><input type="time" id="cEnd1" value="12:30" step="1800"></div>
+      </div>
+      <div><label>วัน (คาบ 2 — ไม่บังคับ)</label><select id="cDay2">
+        <option value="">— ไม่มี —</option>
+        <option value="1">จันทร์</option><option value="2">อังคาร</option><option value="3">พุธ</option>
+        <option value="4">พฤหัสบดี</option><option value="5">ศุกร์</option><option value="6">เสาร์</option>
+      </select></div>
+      <div style="display:flex;gap:6px">
+        <div style="flex:1"><label>เริ่ม</label><input type="time" id="cStart2" value="13:30" step="1800"></div>
+        <div style="flex:1"><label>จบ</label><input type="time" id="cEnd2" value="15:30" step="1800"></div>
+      </div>
+      <div><label>สีบล็อก</label><input type="color" id="cColor" value="#5c7cfa" style="height:36px;padding:3px"></div>
+    </div>
+    <div id="cMsg" style="font-size:.75rem;color:var(--danger);margin-top:8px"></div>
+    <div class="close-row">
+      <button class="close" id="cCancel" style="background:#fff;color:var(--muted);border:1.5px solid var(--border);margin-right:8px">ยกเลิก</button>
+      <button class="close" id="cAdd">เพิ่มวิชา ✓</button>
+    </div>
+  </div>
 </div>
 
 <div class="overlay" id="shareModal">
@@ -520,6 +625,12 @@
       <div class="pm-row" id="pmOrient">
         <div class="theme-opt" data-o="landscape">แนวนอน</div>
         <div class="theme-opt" data-o="portrait">แนวตั้ง</div>
+      </div>
+
+      <label class="fld">รูปแบบตาราง</label>
+      <div class="pm-row" id="pmLayout">
+        <div class="theme-opt" data-l="v">เวลาแนวตั้ง</div>
+        <div class="theme-opt" data-l="h">วันเป็นแถว</div>
       </div>
 
       <label class="pm-check"><input type="checkbox" id="pmTable" checked> แนบตารางสรุปรายวิชา</label>
@@ -1051,8 +1162,20 @@ const LNG_COURSES = LNG_DEFS.map(([code, name, credits, prereq, secs], i) => ({
   })),
 }));
 
-const ALL = [...CPE_COURSES, ...GEN_COURSES, ...LNG_COURSES];
-const byId = Object.fromEntries(ALL.map(c => [c.id, c]));
+// วิชาที่ user เพิ่มเอง — เก็บใน localStorage
+const CUSTOM_KEY = "cpe-custom-courses";
+let CUSTOM_COURSES = [];
+try { CUSTOM_COURSES = JSON.parse(localStorage.getItem(CUSTOM_KEY) || "[]"); } catch (e) {}
+
+let ALL = [], byId = {};
+function rebuildData() {
+  ALL = [...CPE_COURSES, ...GEN_COURSES, ...LNG_COURSES, ...CUSTOM_COURSES];
+  byId = Object.fromEntries(ALL.map(c => [c.id, c]));
+}
+rebuildData();
+function saveCustom() {
+  try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(CUSTOM_COURSES)); } catch (e) {}
+}
 const LNG_SEC_COUNT = LNG_COURSES.reduce((s, c) => s + c.sections.length, 0);
 const GEN_SEC_COUNT = GEN_COURSES.reduce((s, c) => s + c.sections.length, 0);
 
@@ -1065,7 +1188,7 @@ function fmtTime(h) {
   return String(hh).padStart(2, "0") + ":" + String(mm).padStart(2, "0");
 }
 function slotStr(sl) { return DAYS[sl.day-1] + " " + fmtTime(sl.start) + "–" + fmtTime(sl.end) + " น."; }
-function slotsStr(s) { return s.slots.map(slotStr).join(" + "); }
+function slotsStr(s) { return s.slots.length ? s.slots.map(slotStr).join(" + ") : "เวลาไม่ระบุ"; }
 
 const FMT_LABEL = { online: "Online", blended: "Blended", "on-site": "On-site" };
 function fmtBadge(s) {
@@ -1085,11 +1208,13 @@ function buildSidebar() {
   const list = document.getElementById("courseList");
   list.innerHTML = "";
   const groups = [
+    ["วิชาที่เพิ่มเอง", CUSTOM_COURSES],
     ["วิชาภาค CPE ปี 4", CPE_COURSES],
     [`วิชาศึกษาทั่วไป (GEN)`, GEN_COURSES],
     [`วิชาภาษา (LNG) — คณะศิลปศาสตร์`, LNG_COURSES],
   ];
   groups.forEach(([title, arr]) => {
+    if (!arr.length) return;
     const h = document.createElement("div");
     h.className = "group-header";
     h.innerHTML = `${title} <span class="cnt">${arr.length} วิชา</span>`;
@@ -1121,12 +1246,24 @@ function courseCard(c) {
     <div class="course-name">${c.name}</div>
     <div class="sec-list ${c.sections.length > 5 ? "tall" : ""}">${secRows}</div>
     <button class="detail-btn" data-id="${c.id}">ดูรายละเอียด ›</button>
+    ${c.type === "CUSTOM" ? `<button class="del-course" title="ลบวิชานี้">🗑</button>` : ""}
     <span class="cc-dot"></span>`;
 
   card.querySelectorAll("input[type=checkbox]").forEach(chk => {
     chk.addEventListener("change", () => toggleSec(c.id, +chk.dataset.si, chk.checked));
   });
   card.querySelector(".detail-btn").addEventListener("click", () => openModal(c.id));
+  if (c.type === "CUSTOM") {
+    card.querySelector(".del-course").addEventListener("click", () => {
+      if (!confirm(`ลบวิชา ${c.code} ${c.name}?`)) return;
+      CUSTOM_COURSES = CUSTOM_COURSES.filter(x => x.id !== c.id);
+      c.sections.forEach((_, i) => selected.delete(selKey(c.id, i)));
+      saveCustom();
+      rebuildData();
+      buildSidebar();
+      syncUI();
+    });
+  }
   return card;
 }
 
@@ -1163,8 +1300,23 @@ function serialize() {
   return [...selected.values()].map(({ cid, si }) => cid + ":" + byId[cid].sections[si].sec).join(",");
 }
 function applyCode(raw) {
-  // รับได้ทั้งโค้ดล้วนและลิงก์เต็ม (#s=...)
+  // รับได้ทั้งโค้ดล้วนและลิงก์เต็ม (#s=...&c=... โดย c = วิชาที่เพิ่มเองแบบ base64)
   let code = raw.trim();
+  const cm = code.match(/[#&]c=([A-Za-z0-9+/=]+)/);
+  if (cm) {
+    try {
+      const arr = JSON.parse(decodeURIComponent(escape(atob(cm[1]))));
+      let added = false;
+      arr.forEach(cc => {
+        if (cc && cc.id && !byId[cc.id] && !CUSTOM_COURSES.some(x => x.id === cc.id)) {
+          cc.type = "CUSTOM";
+          CUSTOM_COURSES.push(cc);
+          added = true;
+        }
+      });
+      if (added) { saveCustom(); rebuildData(); buildSidebar(); }
+    } catch (e) {}
+  }
   const m = code.match(/#s=([^&\s]+)/);
   if (m) code = decodeURIComponent(m[1]);
   const toks = code.split(",").map(s => s.trim()).filter(Boolean);
@@ -1205,47 +1357,92 @@ document.getElementById("searchInput").addEventListener("input", e => {
   updateHint(q, counts);
 });
 
-// ── Calendar grid ──
+// ── Calendar grid (2 โหมด: v = เวลาแนวตั้ง, h = วันเป็นแถว) ──
+let calMode = localStorage.getItem("cpe-cal-mode") || "v";
+const HOUR_W = 68;
+
 function buildCalendar() {
   const cal = document.getElementById("calendar");
   cal.innerHTML = "";
-  const totalH = (DAY_END - DAY_START) * HOUR_PX;
+  if (calMode === "v") {
+    cal.className = "cal-wrap";
+    const totalH = (DAY_END - DAY_START) * HOUR_PX;
 
-  const corner = document.createElement("div");
-  corner.className = "cal-head corner";
-  corner.textContent = "เวลา";
-  cal.appendChild(corner);
-  DAYS.forEach((d, i) => {
-    const el = document.createElement("div");
-    el.className = "cal-head" + (i === 5 ? " sat" : "");
-    el.textContent = d;
-    cal.appendChild(el);
-  });
+    const corner = document.createElement("div");
+    corner.className = "cal-head corner";
+    corner.textContent = "เวลา";
+    cal.appendChild(corner);
+    DAYS.forEach((d, i) => {
+      const el = document.createElement("div");
+      el.className = "cal-head" + (i === 5 ? " sat" : "");
+      el.textContent = d;
+      cal.appendChild(el);
+    });
 
-  const tc = document.createElement("div");
-  tc.className = "time-col";
-  tc.style.height = totalH + "px";
-  for (let h = DAY_START; h <= DAY_END; h++) {
-    const lb = document.createElement("div");
-    lb.className = "time-label";
-    lb.style.top = (h - DAY_START) * HOUR_PX + "px";
-    lb.textContent = fmtTime(h);
-    tc.appendChild(lb);
-  }
-  cal.appendChild(tc);
-
-  for (let d = 1; d <= 6; d++) {
-    const col = document.createElement("div");
-    col.className = "day-col" + (d === 6 ? " sat" : "");
-    col.id = "day-" + d;
-    col.style.height = totalH + "px";
-    for (let h = DAY_START + 1; h < DAY_END; h++) {
-      const ln = document.createElement("div");
-      ln.className = "hour-line";
-      ln.style.top = (h - DAY_START) * HOUR_PX + "px";
-      col.appendChild(ln);
+    const tc = document.createElement("div");
+    tc.className = "time-col";
+    tc.style.height = totalH + "px";
+    for (let h = DAY_START; h <= DAY_END; h++) {
+      const lb = document.createElement("div");
+      lb.className = "time-label";
+      lb.style.top = (h - DAY_START) * HOUR_PX + "px";
+      lb.textContent = fmtTime(h);
+      tc.appendChild(lb);
     }
-    cal.appendChild(col);
+    cal.appendChild(tc);
+
+    for (let d = 1; d <= 6; d++) {
+      const col = document.createElement("div");
+      col.className = "day-col" + (d === 6 ? " sat" : "");
+      col.id = "day-" + d;
+      col.style.height = totalH + "px";
+      for (let h = DAY_START + 1; h < DAY_END; h++) {
+        const ln = document.createElement("div");
+        ln.className = "hour-line";
+        ln.style.top = (h - DAY_START) * HOUR_PX + "px";
+        col.appendChild(ln);
+      }
+      cal.appendChild(col);
+    }
+  } else {
+    cal.className = "cal-h";
+    const rowW = (DAY_END - DAY_START) * HOUR_W;
+
+    const corner = document.createElement("div");
+    corner.className = "ch-corner";
+    corner.textContent = "วัน \\ เวลา";
+    cal.appendChild(corner);
+
+    const hours = document.createElement("div");
+    hours.className = "ch-hours";
+    hours.style.minWidth = rowW + "px";
+    for (let h = DAY_START; h <= DAY_END; h++) {
+      const lb = document.createElement("div");
+      lb.className = "ch-hlb";
+      lb.style.left = (h - DAY_START) * HOUR_W + "px";
+      lb.textContent = fmtTime(h);
+      hours.appendChild(lb);
+    }
+    cal.appendChild(hours);
+
+    for (let d = 1; d <= 6; d++) {
+      const lab = document.createElement("div");
+      lab.className = "ch-dlabel" + (d === 6 ? " sat" : "");
+      lab.textContent = DAYS[d-1];
+      cal.appendChild(lab);
+
+      const row = document.createElement("div");
+      row.className = "ch-row" + (d === 6 ? " sat" : "");
+      row.id = "day-" + d;
+      row.style.minWidth = rowW + "px";
+      for (let h = DAY_START + 1; h < DAY_END; h++) {
+        const ln = document.createElement("div");
+        ln.className = "ch-vline";
+        ln.style.left = (h - DAY_START) * HOUR_W + "px";
+        row.appendChild(ln);
+      }
+      cal.appendChild(row);
+    }
   }
 }
 
@@ -1279,13 +1476,21 @@ function render() {
         const b = document.createElement("div");
         b.className = "block" + (n > 1 ? " clash" : "");
         b.style.background = c.color;
-        b.style.top = (sl.start - DAY_START) * HOUR_PX + 2 + "px";
-        b.style.height = (sl.end - sl.start) * HOUR_PX - 4 + "px";
-        b.style.left = `calc(${(i / n) * 100}% + 3px)`;
-        b.style.width = `calc(${100 / n}% - 6px)`;
         b.style.zIndex = 2 + i;
-        const nm = n > 2 ? "" : (c.name.length > 38 ? c.name.slice(0, 36) + "…" : c.name);
-        b.innerHTML = `<b>${c.code} S${s.sec}</b>${nm}<span class="rm"><br>${roomLabel(s)} · ${fmtTime(sl.start)}–${fmtTime(sl.end)}</span>`;
+        if (calMode === "v") {
+          b.style.top = (sl.start - DAY_START) * HOUR_PX + 2 + "px";
+          b.style.height = (sl.end - sl.start) * HOUR_PX - 4 + "px";
+          b.style.left = `calc(${(i / n) * 100}% + 3px)`;
+          b.style.width = `calc(${100 / n}% - 6px)`;
+          const nm = n > 2 ? "" : (c.name.length > 38 ? c.name.slice(0, 36) + "…" : c.name);
+          b.innerHTML = `<b>${c.code} S${s.sec}</b>${nm}<span class="rm"><br>${roomLabel(s)} · ${fmtTime(sl.start)}–${fmtTime(sl.end)}</span>`;
+        } else {
+          b.style.left = (sl.start - DAY_START) * HOUR_W + 2 + "px";
+          b.style.width = (sl.end - sl.start) * HOUR_W - 4 + "px";
+          b.style.top = `calc(${(i / n) * 100}% + 2px)`;
+          b.style.height = `calc(${100 / n}% - 4px)`;
+          b.innerHTML = `<b>${c.code} S${s.sec}</b>${n > 1 ? "" : roomLabel(s) + " · "}${fmtTime(sl.start)}–${fmtTime(sl.end)}`;
+        }
         b.title = `${c.code} ${c.name} (Sec ${s.sec})\n${slotStr(sl)} · ${roomLabel(s)}`;
         b.addEventListener("click", () => openModal(c.id));
         col.appendChild(b);
@@ -1293,12 +1498,36 @@ function render() {
     });
   }
 
+  // วิชาที่เลือกแต่ไม่มีเวลาเรียน (เช่นวิชาที่เพิ่มเองแบบไม่ระบุ)
+  const noTime = [...selected.values()]
+    .map(({ cid, si }) => ({ c: byId[cid], s: byId[cid].sections[si] }))
+    .filter(x => !x.s.slots.length);
+  const bar = document.getElementById("noTimeBar");
+  if (noTime.length) {
+    bar.style.display = "block";
+    bar.innerHTML = "⏳ <b>เลือกแล้วแต่ไม่ระบุเวลา:</b> " +
+      noTime.map(x => `${x.c.code} (Sec ${x.s.sec})`).join(" · ");
+  } else bar.style.display = "none";
+
   const credits = [...new Set([...selected.values()].map(x => x.cid))]
     .reduce((sum, cid) => sum + byId[cid].credits, 0);
   document.getElementById("creditBadge").textContent =
     `${credits} หน่วยกิต · ${selected.size} วิชา`;
   document.getElementById("conflictBadge").classList.toggle("show", clashFound);
 }
+
+// ── สลับมุมมองปฏิทิน ──
+function updateViewBtn() {
+  document.getElementById("viewBtn").textContent =
+    calMode === "v" ? "🔄 แนวนอน" : "🔄 แนวตั้ง";
+}
+document.getElementById("viewBtn").addEventListener("click", () => {
+  calMode = calMode === "v" ? "h" : "v";
+  localStorage.setItem("cpe-cal-mode", calMode);
+  updateViewBtn();
+  buildCalendar();
+  render();
+});
 
 // ── Modal รายละเอียด ──
 function openModal(id) {
@@ -1315,6 +1544,7 @@ function openModal(id) {
 
   const typeLabel = c.type === "GEN" ? "วิชาศึกษาทั่วไป มจธ."
     : c.type === "LNG" ? "สายวิชาภาษา คณะศิลปศาสตร์"
+    : c.type === "CUSTOM" ? "วิชาที่เพิ่มเอง"
     : "ภาควิชาวิศวกรรมคอมพิวเตอร์ · ห้อง 4A, 4B";
 
   body.innerHTML = `
@@ -1357,7 +1587,7 @@ const THEMES = [
   { id: "cute",    label: "Cute",    desc: "เส้นประ + ดอกไม้",  sw: "#f783ac" },
   { id: "night",   label: "Night",   desc: "โทนมืด (เปลืองหมึก)", sw: "#1a1d29" },
 ];
-const printCfg = { theme: "pastel", orient: "landscape", table: true };
+const printCfg = { theme: "pastel", orient: "landscape", table: true, layout: "v" };
 
 function buildPrintControls() {
   const wrap = document.getElementById("pmThemes");
@@ -1372,9 +1602,15 @@ function buildPrintControls() {
   document.querySelectorAll("#pmOrient .theme-opt").forEach(el => {
     el.classList.toggle("on", el.dataset.o === printCfg.orient);
   });
+  document.querySelectorAll("#pmLayout .theme-opt").forEach(el => {
+    el.classList.toggle("on", el.dataset.l === printCfg.layout);
+  });
 }
 document.querySelectorAll("#pmOrient .theme-opt").forEach(el => {
   el.addEventListener("click", () => { printCfg.orient = el.dataset.o; buildPrintControls(); renderPrintSheet(); });
+});
+document.querySelectorAll("#pmLayout .theme-opt").forEach(el => {
+  el.addEventListener("click", () => { printCfg.layout = el.dataset.l; buildPrintControls(); renderPrintSheet(); });
 });
 document.getElementById("pmTable").addEventListener("change", e => { printCfg.table = e.target.checked; renderPrintSheet(); });
 document.getElementById("pmTitle").addEventListener("input", renderPrintSheet);
@@ -1400,18 +1636,7 @@ function renderPrintSheet() {
   const title = document.getElementById("pmTitle").value || "ตารางเรียน";
   const name = document.getElementById("pmName").value;
 
-  let cal = `<div class="ps-cal"><div class="ps-ch">เวลา</div>` +
-    DAYS.map(d => `<div class="ps-ch">${d}</div>`).join("");
-  // time col
-  cal += `<div class="ps-tcol" style="height:${bodyH}px">`;
-  for (let h = minH; h <= maxH; h++)
-    cal += `<div class="ps-tlb" style="top:${(h - minH) * hp}px">${fmtTime(h)}</div>`;
-  cal += `</div>`;
-  // day cols
-  for (let d = 1; d <= 6; d++) {
-    cal += `<div class="ps-dcol" style="height:${bodyH}px">`;
-    for (let h = minH + 1; h < maxH; h++)
-      cal += `<div class="ps-hline" style="top:${(h - minH) * hp}px"></div>`;
+  const dayClusters = d => {
     const dayItems = flat.filter(x => x.sl.day === d).sort((a, b) => a.sl.start - b.sl.start);
     const clusters = [];
     let cur = [], curEnd = -1;
@@ -1420,17 +1645,57 @@ function renderPrintSheet() {
       else { if (cur.length) clusters.push(cur); cur = [x]; curEnd = x.sl.end; }
     });
     if (cur.length) clusters.push(cur);
-    clusters.forEach(cluster => {
-      const n = cluster.length;
-      cluster.forEach((x, i) => {
-        const { c, s, sl } = x;
-        cal += `<div class="ps-blk" style="background:${c.color};top:${(sl.start - minH) * hp + 1.5}px;height:${(sl.end - sl.start) * hp - 3}px;left:calc(${(i / n) * 100}% + 2px);width:calc(${100 / n}% - 4px)">` +
-          `<b>${c.code}</b>${fmtTime(sl.start)}–${fmtTime(sl.end)}<br>${roomLabel(s)}</div>`;
+    return clusters;
+  };
+
+  let cal;
+  if (printCfg.layout === "v") {
+    // เวลาแนวตั้ง (คอลัมน์ = วัน)
+    cal = `<div class="ps-cal"><div class="ps-ch">เวลา</div>` +
+      DAYS.map(d => `<div class="ps-ch">${d}</div>`).join("");
+    cal += `<div class="ps-tcol" style="height:${bodyH}px">`;
+    for (let h = minH; h <= maxH; h++)
+      cal += `<div class="ps-tlb" style="top:${(h - minH) * hp}px">${fmtTime(h)}</div>`;
+    cal += `</div>`;
+    for (let d = 1; d <= 6; d++) {
+      cal += `<div class="ps-dcol" style="height:${bodyH}px">`;
+      for (let h = minH + 1; h < maxH; h++)
+        cal += `<div class="ps-hline" style="top:${(h - minH) * hp}px"></div>`;
+      dayClusters(d).forEach(cluster => {
+        const n = cluster.length;
+        cluster.forEach((x, i) => {
+          const { c, s, sl } = x;
+          cal += `<div class="ps-blk" style="background:${c.color};top:${(sl.start - minH) * hp + 1.5}px;height:${(sl.end - sl.start) * hp - 3}px;left:calc(${(i / n) * 100}% + 2px);width:calc(${100 / n}% - 4px)">` +
+            `<b>${c.code}</b>${fmtTime(sl.start)}–${fmtTime(sl.end)}<br>${roomLabel(s)}</div>`;
+        });
       });
-    });
+      cal += `</div>`;
+    }
+    cal += `</div>`;
+  } else {
+    // วันเป็นแถว (แกนเวลาแนวนอน)
+    const availW = (printCfg.orient === "landscape" ? 1050 : 740) - 32 - 40 - 84;
+    const hw = availW / (maxH - minH);
+    cal = `<div class="psh"><div class="ch-corner">วัน \\ เวลา</div><div class="ch-hours" style="width:${availW}px">`;
+    for (let h = minH; h <= maxH; h++)
+      cal += `<div class="ch-hlb" style="left:${(h - minH) * hw}px">${fmtTime(h)}</div>`;
+    cal += `</div>`;
+    for (let d = 1; d <= 6; d++) {
+      cal += `<div class="ch-dlabel">${DAYS[d-1]}</div><div class="ch-row" style="width:${availW}px">`;
+      for (let h = minH + 1; h < maxH; h++)
+        cal += `<div class="ch-vline" style="left:${(h - minH) * hw}px"></div>`;
+      dayClusters(d).forEach(cluster => {
+        const n = cluster.length;
+        cluster.forEach((x, i) => {
+          const { c, s, sl } = x;
+          cal += `<div class="ps-blk" style="background:${c.color};left:${(sl.start - minH) * hw + 1.5}px;width:${(sl.end - sl.start) * hw - 3}px;top:calc(${(i / n) * 100}% + 1.5px);height:calc(${100 / n}% - 3px)">` +
+            `<b>${c.code}</b>${fmtTime(sl.start)}–${fmtTime(sl.end)}${n > 1 ? "" : " · " + roomLabel(s)}</div>`;
+        });
+      });
+      cal += `</div>`;
+    }
     cal += `</div>`;
   }
-  cal += `</div>`;
 
   let table = "";
   if (printCfg.table && sel.length) {
@@ -1488,10 +1753,14 @@ function copyText(text, btn) {
 }
 document.getElementById("shareBtn").addEventListener("click", () => {
   const code = serialize();
+  let url = location.origin + location.pathname + "#s=" + encodeURIComponent(code);
+  // แนบวิชาที่เพิ่มเอง (เฉพาะที่ถูกเลือก) ไปกับลิงก์ด้วย
+  const usedCustom = CUSTOM_COURSES.filter(c => c.sections.some((_, i) => selected.has(selKey(c.id, i))));
+  if (usedCustom.length) {
+    url += "&c=" + btoa(unescape(encodeURIComponent(JSON.stringify(usedCustom))));
+  }
   document.getElementById("shCode").value = code || "(ยังไม่ได้เลือกวิชา)";
-  document.getElementById("shUrl").value = code
-    ? location.origin + location.pathname + "#s=" + encodeURIComponent(code)
-    : "(ยังไม่ได้เลือกวิชา)";
+  document.getElementById("shUrl").value = code ? url : "(ยังไม่ได้เลือกวิชา)";
   document.getElementById("shMsg").textContent = "";
   document.getElementById("shPaste").value = "";
   document.getElementById("shareModal").classList.add("show");
@@ -1511,8 +1780,71 @@ document.getElementById("shareModal").addEventListener("click", e => {
   if (e.target.id === "shareModal") document.getElementById("shareModal").classList.remove("show");
 });
 
+// ── เพิ่มวิชาเอง ──
+function timeToFloat(t) {
+  const [h, m] = t.split(":").map(Number);
+  return h + m / 60;
+}
+document.getElementById("addBtn").addEventListener("click", () => {
+  document.getElementById("cMsg").textContent = "";
+  document.getElementById("customModal").classList.add("show");
+});
+document.getElementById("cCancel").addEventListener("click", () => {
+  document.getElementById("customModal").classList.remove("show");
+});
+document.getElementById("customModal").addEventListener("click", e => {
+  if (e.target.id === "customModal") document.getElementById("customModal").classList.remove("show");
+});
+document.getElementById("cAdd").addEventListener("click", () => {
+  const code = document.getElementById("cCode").value.trim().toUpperCase();
+  const name = document.getElementById("cName").value.trim();
+  const msg = document.getElementById("cMsg");
+  if (!code || !name) { msg.textContent = "กรอกรหัสวิชาและชื่อวิชาก่อน"; return; }
+
+  const slots = [];
+  const d1 = +document.getElementById("cDay1").value;
+  const s1 = timeToFloat(document.getElementById("cStart1").value);
+  const e1 = timeToFloat(document.getElementById("cEnd1").value);
+  if (e1 <= s1) { msg.textContent = "เวลาจบต้องหลังเวลาเริ่ม (คาบ 1)"; return; }
+  slots.push({ day: d1, start: s1, end: e1 });
+
+  const d2raw = document.getElementById("cDay2").value;
+  if (d2raw) {
+    const s2 = timeToFloat(document.getElementById("cStart2").value);
+    const e2 = timeToFloat(document.getElementById("cEnd2").value);
+    if (e2 <= s2) { msg.textContent = "เวลาจบต้องหลังเวลาเริ่ม (คาบ 2)"; return; }
+    slots.push({ day: +d2raw, start: s2, end: e2 });
+  }
+
+  const teacher = document.getElementById("cTeacher").value.trim();
+  const course = {
+    id: "X" + Date.now().toString(36),
+    code, name,
+    credits: Math.max(0, +document.getElementById("cCredits").value || 0),
+    prereq: "-", type: "CUSTOM", exam: "-", link: null,
+    color: document.getElementById("cColor").value,
+    sections: [{
+      sec: "1",
+      room: document.getElementById("cRoom").value.trim() || "TBA",
+      groups: "เพิ่มเอง",
+      teachers: teacher ? teacher.split(",").map(s => s.trim()) : null,
+      slots, intl: false,
+    }],
+  };
+  CUSTOM_COURSES.push(course);
+  saveCustom();
+  rebuildData();
+  buildSidebar();
+  selected.set(selKey(course.id, 0), { cid: course.id, si: 0 });  // เลือกให้เลยทันที
+  syncUI();
+  document.getElementById("customModal").classList.remove("show");
+  ["cCode", "cName", "cRoom", "cTeacher"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("cDay2").value = "";
+});
+
 buildSidebar();
 buildCalendar();
+updateViewBtn();
 render();
 
 // โหลดตาราง: ลิงก์แชร์ (#s=) มาก่อน > localStorage
