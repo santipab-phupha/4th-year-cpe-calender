@@ -451,6 +451,7 @@
   <div class="spacer"></div>
   <span class="conflict-badge" id="conflictBadge">⚠ เวลาเรียนชนกัน!</span>
   <span class="credit-badge" id="creditBadge">0 หน่วยกิต · 0 วิชา</span>
+  <button class="print-btn" id="shareBtn">📤 แชร์</button>
   <button class="print-btn" id="printBtn">🖨️ พิมพ์ตาราง</button>
 </header>
 
@@ -470,6 +471,36 @@
 
 <div class="overlay" id="overlay">
   <div class="modal" id="modalBody"></div>
+</div>
+
+<div class="overlay" id="shareModal">
+  <div class="modal" style="max-width:520px">
+    <h3 style="margin-bottom:4px">📤 แชร์ / โหลดตาราง</h3>
+    <div class="thname">ตารางเซฟอัตโนมัติในเครื่องอยู่แล้ว (localStorage) — อันนี้ไว้ส่งให้เพื่อน</div>
+
+    <label style="font-size:.8rem;font-weight:600;display:block;margin:10px 0 4px">ลิงก์แชร์ (เปิดแล้วได้ตารางเหมือนกันเลย)</label>
+    <div style="display:flex;gap:6px">
+      <input type="text" id="shUrl" readonly style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:.75rem;font-family:inherit">
+      <button class="print-btn" id="shCopyUrl">คัดลอก</button>
+    </div>
+
+    <label style="font-size:.8rem;font-weight:600;display:block;margin:12px 0 4px">โค้ดตาราง (สั้น ๆ ไว้ส่งแชท)</label>
+    <div style="display:flex;gap:6px">
+      <input type="text" id="shCode" readonly style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:.75rem;font-family:monospace">
+      <button class="print-btn" id="shCopyCode">คัดลอก</button>
+    </div>
+
+    <label style="font-size:.8rem;font-weight:600;display:block;margin:14px 0 4px">โหลดจากโค้ด/ลิงก์ของเพื่อน (วางแล้วกดโหลด — ทับตารางปัจจุบัน)</label>
+    <div style="display:flex;gap:6px">
+      <input type="text" id="shPaste" placeholder="วางโค้ดหรือลิงก์ตรงนี้" style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:.75rem;font-family:monospace">
+      <button class="print-btn" id="shLoad">โหลด</button>
+    </div>
+    <div id="shMsg" style="font-size:.75rem;margin-top:8px;color:var(--muted)"></div>
+
+    <div class="close-row">
+      <button class="close" id="shClose">ปิด</button>
+    </div>
+  </div>
 </div>
 
 <div class="overlay" id="printModal">
@@ -1123,6 +1154,34 @@ function syncUI() {
     if (card) card.classList.toggle("has-selected", any);
   });
   render();
+  saveLocal();
+}
+
+// ── Save / Share ──
+const STORE_KEY = "cpe-schedule-1-2569";
+function serialize() {
+  return [...selected.values()].map(({ cid, si }) => cid + ":" + byId[cid].sections[si].sec).join(",");
+}
+function applyCode(raw) {
+  // รับได้ทั้งโค้ดล้วนและลิงก์เต็ม (#s=...)
+  let code = raw.trim();
+  const m = code.match(/#s=([^&\s]+)/);
+  if (m) code = decodeURIComponent(m[1]);
+  const toks = code.split(",").map(s => s.trim()).filter(Boolean);
+  let ok = 0;
+  selected.clear();
+  toks.forEach(tok => {
+    const [cid, sec] = tok.split(":");
+    const c = byId[cid];
+    if (!c) return;
+    const si = c.sections.findIndex(s => s.sec === sec);
+    if (si >= 0) { selected.set(selKey(cid, si), { cid, si }); ok++; }
+  });
+  syncUI();
+  return { ok, total: toks.length };
+}
+function saveLocal() {
+  try { localStorage.setItem(STORE_KEY, serialize()); } catch (e) {}
 }
 
 // ── Search ──
@@ -1416,9 +1475,52 @@ document.getElementById("printModal").addEventListener("click", e => {
 });
 document.getElementById("pmPrint").addEventListener("click", () => window.print());
 
+// ── Share modal ──
+function copyText(text, btn) {
+  const done = () => { const old = btn.textContent; btn.textContent = "คัดลอกแล้ว ✓"; setTimeout(() => btn.textContent = old, 1500); };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done);
+  } else {
+    const ta = document.createElement("textarea");
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand("copy"); ta.remove(); done();
+  }
+}
+document.getElementById("shareBtn").addEventListener("click", () => {
+  const code = serialize();
+  document.getElementById("shCode").value = code || "(ยังไม่ได้เลือกวิชา)";
+  document.getElementById("shUrl").value = code
+    ? location.origin + location.pathname + "#s=" + encodeURIComponent(code)
+    : "(ยังไม่ได้เลือกวิชา)";
+  document.getElementById("shMsg").textContent = "";
+  document.getElementById("shPaste").value = "";
+  document.getElementById("shareModal").classList.add("show");
+});
+document.getElementById("shCopyUrl").addEventListener("click", e => copyText(document.getElementById("shUrl").value, e.target));
+document.getElementById("shCopyCode").addEventListener("click", e => copyText(document.getElementById("shCode").value, e.target));
+document.getElementById("shLoad").addEventListener("click", () => {
+  const raw = document.getElementById("shPaste").value;
+  if (!raw.trim()) return;
+  const { ok, total } = applyCode(raw);
+  document.getElementById("shMsg").textContent =
+    ok ? `โหลดสำเร็จ ${ok}/${total} วิชา ✓` : "โค้ดไม่ถูกต้อง — ไม่พบวิชาที่ตรงกัน";
+  document.getElementById("shMsg").style.color = ok ? "#2b8a3e" : "var(--danger)";
+});
+document.getElementById("shClose").addEventListener("click", () => document.getElementById("shareModal").classList.remove("show"));
+document.getElementById("shareModal").addEventListener("click", e => {
+  if (e.target.id === "shareModal") document.getElementById("shareModal").classList.remove("show");
+});
+
 buildSidebar();
 buildCalendar();
 render();
+
+// โหลดตาราง: ลิงก์แชร์ (#s=) มาก่อน > localStorage
+(function restore() {
+  const m = location.hash.match(/#s=([^&]+)/);
+  const saved = m ? decodeURIComponent(m[1]) : (localStorage.getItem(STORE_KEY) || "");
+  if (saved) applyCode(saved);
+})();
 </script>
 </body>
 </html>
